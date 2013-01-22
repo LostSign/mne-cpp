@@ -66,3 +66,4 @@
 # IDE settings
 .cproject
 .project
+/bin/MNE-sample-data/*.txt
