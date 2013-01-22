@@ -77,13 +77,13 @@ GeometryView::GeometryView(QWindow *parent)
 , m_pSceneNodeBrain(0)
 , m_pSceneNode(0)
 {
-    QString t_sFile = "./MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif";
+    QString t_sFile = "../data/sample_audvis-meg-eeg-oct-6-fwd.fif";//"./MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif";
     QFile t_File(t_sFile);
     if(!MNE::read_forward_solution(t_File, t_ForwardSolution))
         t_ForwardSolution.clear();
 
-    m_vecAnnotation.append(Annotation::SPtr(new Annotation(QString("./MNE-sample-data/subjects/sample/label/lh.aparc.a2009s.annot"))));
-    m_vecAnnotation.append(Annotation::SPtr(new Annotation(QString("./MNE-sample-data/subjects/sample/label/rh.aparc.a2009s.annot"))));
+    m_vecAnnotation.append(Annotation::SPtr(new Annotation(QString("../data/lh.aparc.a2009s.annot"))));//"./MNE-sample-data/subjects/sample/label/lh.aparc.a2009s.annot"
+    m_vecAnnotation.append(Annotation::SPtr(new Annotation(QString("../data/rh.aparc.a2009s.annot"))));//"./MNE-sample-data/subjects/sample/label/rh.aparc.a2009s.annot"
 
     m_pCameraFrontal = new QGLCamera(this);
     m_pCameraFrontal->setAdjustForAspectRatio(false);
@@ -219,6 +219,18 @@ void GeometryView::initializeGL(QGLPainter *painter)
         //
         if (m_bStereo) {
             this->setStereoType(QGLView::RedCyanAnaglyph);
+
+//            QGLView::Hardware 0 Specialized stereo hardware is being used.
+//            QGLView::RedCyanAnaglyph 1 Stereo is being simulated for viewing by red-cyan anaglyph classes.
+//            QGLView::LeftRight 2 The view is double-wide with the left eye image on the left of the window.
+//            QGLView::RightLeft 3 The view is double-wide with the left eye image on the right of the window.
+//            QGLView::TopBottom 4 The view is double-high with the left eye image on the top of the window.
+//            QGLView::BottomTop 5 The view is double-high with the left eye image on the bottom of the window.
+//            QGLView::StretchedLeftRight 6 Same as LeftRight, but with the left and right eye images stretched to double their width.
+//            QGLView::StretchedRightLeft 7 Same as RightLeft, but with the left and right eye images stretched to double their width.
+//            QGLView::StretchedTopBottom 8 Same as TopBottom, but with the left and right eye images stretched to double their height.
+//            QGLView::StretchedBottomTop 9 Same as BottomTop, but with the left and right eye images stretched to double their height.
+
             camera()->setEyeSeparation(0.4f);
             m_pCameraFrontal->setEyeSeparation(0.1f);
         }
