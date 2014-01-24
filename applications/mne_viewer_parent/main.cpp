@@ -30,7 +30,7 @@
 * POSSIBILITY OF SUCH DAMAGE.
 *
 *
-* @brief    mne_viewer used as sub_process
+* @brief    mne_viewer_parent used parent test
 *
 */
 
@@ -83,14 +83,35 @@ int main(int argc, char *argv[])
 //    arguments << "-style" << "fusion";
 
     QProcess myProcess;
-    myProcess.start("mne_viewer");
+
+    myProcess.setProcessChannelMode(QProcess::ForwardedChannels);
+
+    myProcess.start("mne_viewer", QProcess::Unbuffered | QProcess::ReadWrite);
+
+    if(!myProcess.waitForStarted(3000))
+    {
+        std::cout << "Subprocess couldn't be started" << std::endl;
+    }
+
+    std::cout << "Subprocess started" << std::endl;
 
     QByteArray ba;
+    qint32 count = 0;
 
-    while(myProcess.waitForReadyRead(-1))
+    while(count < 100000)
     {
-        qDebug() << myProcess.readAllStandardOutput();
+        ba = QByteArray("count\n");
+        ba.prepend((QString("%1 ").arg(count)).toLatin1().data());
+        myProcess.write(ba);
+
+        myProcess.waitForBytesWritten();
+
+        ++count;
     }
+//    while(myProcess.waitForReadyRead(-1))
+//    {
+//        qDebug() << myProcess.readAllStandardOutput();
+//    }
 
     return a.exec();
 }
