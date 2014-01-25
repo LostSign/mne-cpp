@@ -1,11 +1,11 @@
 //=============================================================================================================
 /**
-* @file     main.cpp
+* @file     listener.cpp
 * @author   Christoph Dinh <chdinh@nmr.mgh.harvard.edu>;
 *           Jens Haueisen <jens.haueisen@tu-ilmenau.de>;
 *           Matti Hamalainen <msh@nmr.mgh.harvard.edu>
 * @version  1.0
-* @date     July, 2012
+* @date     January, 2013
 *
 * @section  LICENSE
 *
@@ -30,17 +30,16 @@
 * POSSIBILITY OF SUCH DAMAGE.
 *
 *
-* @brief    mne_viewer_parent used parent test
+* @brief    Listener class implementation
 *
 */
-
 
 //*************************************************************************************************************
 //=============================================================================================================
 // INCLUDES
 //=============================================================================================================
 
-#include <iostream>
+#include "listener.h"
 
 
 //*************************************************************************************************************
@@ -48,76 +47,59 @@
 // QT INCLUDES
 //=============================================================================================================
 
-#include <QtCore/QCoreApplication>
-#include <QProcess>
-#include <QDebug>
+#include <QTextStream>
 
 
 //*************************************************************************************************************
 //=============================================================================================================
-// USED NAMESPACES
+// DEFINE MEMBER METHODS
 //=============================================================================================================
 
-
-//*************************************************************************************************************
-//=============================================================================================================
-// MAIN
-//=============================================================================================================
-
-//=============================================================================================================
-/**
-* The function main marks the entry point of the program.
-* By default, main has the storage class extern.
-*
-* @param [in] argc (argument count) is an integer that indicates how many arguments were entered on the command line when the program was started.
-* @param [in] argv (argument vector) is an array of pointers to arrays of character objects. The array objects are null-terminated strings, representing the arguments that were entered on the command line when the program was started.
-* @return the value that was set to exit() (which is 0 if exit() is called via quit()).
-*/
-int main(int argc, char *argv[])
+Listener::Listener(QObject *parent)
+: QThread(parent)
+, m_bIsRunning(false)
 {
-    QCoreApplication a(argc, argv);
+}
 
-    std::cout << "Parent Process" << std::endl;
 
-    QStringList arguments;
-//    arguments << "-style" << "fusion";
+//*************************************************************************************************************
 
-    QProcess myProcess;
+Listener::~Listener()
+{
+    if(this->isRunning())
+        this->stop();
+}
 
-    myProcess.setProcessChannelMode(QProcess::ForwardedChannels);
 
-    myProcess.start("mne_viewer", QProcess::Unbuffered | QProcess::ReadWrite);
+//*************************************************************************************************************
 
-    if(!myProcess.waitForStarted(3000))
-    {
-        std::cout << "Subprocess couldn't be started" << std::endl;
-    }
+bool Listener::start()
+{
+    QThread::start();
+    m_bIsRunning = true;
+    return true;
+}
 
-    std::cout << "Subprocess started" << std::endl;
 
-    QByteArray ba;
-    qint32 count = 0;
+//*************************************************************************************************************
 
-    while(count < 100000)
-    {
-        ba = QByteArray("count\n");
-        ba.prepend((QString("%1 ").arg(count)).toLatin1().data());
-        myProcess.write(ba);
-
-        myProcess.waitForBytesWritten();
-
-        ++count;
-    }
-
-//    while(myProcess.waitForReadyRead(-1))
-//    {
-//        qDebug() << myProcess.readAllStandardOutput();
-//    }
-
-    return a.exec();
+bool Listener::stop()
+{
+    m_bIsRunning = false;
+    return true;
 }
 
 //*************************************************************************************************************
-//=============================================================================================================
-// STATIC DEFINITIONS
-//=============================================================================================================
+
+void Listener::run()
+{
+
+    QTextStream cin(stdin, QIODevice::ReadOnly);
+    while(!cin.atEnd() && m_bIsRunning)
+    {
+        QString line = cin.readLine();
+        printf("Got input %s\n", line.toLatin1().data());
+    }
+
+    printf("Finished\n");
+}

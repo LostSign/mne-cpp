@@ -76,9 +76,13 @@ else {
 DESTDIR = $${MNE_BINARY_DIR}
 
 SOURCES += \
-    main.cpp
+    main.cpp \
+    listener.cpp \
+    interpreter.cpp
 
 HEADERS += \
+    listener.h \
+    interpreter.h
 
 INCLUDEPATH += $${EIGEN_INCLUDE_DIR}
 INCLUDEPATH += $${MNE_INCLUDE_DIR}

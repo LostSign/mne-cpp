@@ -52,6 +52,8 @@
 
 #include <iostream>
 
+#include "interpreter.h"
+
 
 //*************************************************************************************************************
 //=============================================================================================================
@@ -118,14 +120,19 @@ int main(int argc, char *argv[])
 
 //    }
 
-    QTextStream cin(stdin, QIODevice::ReadOnly);
-    while(!cin.atEnd())
-    {
-       QString line = cin.readLine();
-       printf("Got input %s\n", line.toLatin1().data());
-    }
 
-    printf("Finished\n");
+    Interpreter* m_pInterpreter = new Interpreter;
+
+
+
+//    QTextStream cin(stdin, QIODevice::ReadOnly);
+//    while(!cin.atEnd())
+//    {
+//        QString line = cin.readLine();
+//        printf("Got input %s\n", line.toLatin1().data());
+//    }
+
+//    printf("Finished\n");
 
 
 
