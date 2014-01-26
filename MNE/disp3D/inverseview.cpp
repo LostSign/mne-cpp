@@ -127,6 +127,15 @@ void InverseView::pushSourceEstimate(MNESourceEstimate &p_sourceEstimate)
 
 //*************************************************************************************************************
 
+void InverseView::pushSourceEstimate(QSharedPointer<MNESourceEstimate> p_sourceEstimate)
+{
+    std::cout << "STC pushed\n";
+    m_pInverseViewProducer->pushSourceEstimate(*p_sourceEstimate);
+}
+
+
+//*************************************************************************************************************
+
 void InverseView::initializeGL(QGLPainter *painter)
 {
     // in the constructor construct a builder on the stack

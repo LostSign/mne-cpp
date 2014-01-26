@@ -41,6 +41,7 @@
 //=============================================================================================================
 
 #include <iostream>
+#include <mne/mne_sourceestimate.h>
 
 
 //*************************************************************************************************************
@@ -51,12 +52,15 @@
 #include <QtCore/QCoreApplication>
 #include <QProcess>
 #include <QDebug>
+#include <QFile>
 
 
 //*************************************************************************************************************
 //=============================================================================================================
 // USED NAMESPACES
 //=============================================================================================================
+
+using namespace MNELIB;
 
 
 //*************************************************************************************************************
@@ -95,19 +99,46 @@ int main(int argc, char *argv[])
 
     std::cout << "Subprocess started" << std::endl;
 
-    QByteArray ba;
-    qint32 count = 0;
+//    QByteArray ba;
+//    qint32 count = 0;
 
+//    while(count < 100000)
+//    {
+//        ba = QByteArray("count\n");
+//        ba.prepend((QString("%1 ").arg(count)).toLatin1().data());
+//        myProcess.write(ba);
+
+//        myProcess.waitForBytesWritten();
+
+//        ++count;
+//    }
+
+
+    qint32 count = 0;
     while(count < 100000)
     {
-        ba = QByteArray("count\n");
-        ba.prepend((QString("%1 ").arg(count)).toLatin1().data());
-        myProcess.write(ba);
-
-        myProcess.waitForBytesWritten();
-
+        qDebug() << "count" << count;
         ++count;
     }
+
+
+
+    QByteArray qByteArray;
+    QTextStream io(&qByteArray, QIODevice::WriteOnly);
+
+
+    QFile qFileSTC("./stc_test.fif");
+    MNESourceEstimate stc(qFileSTC);
+
+    io << "--stcstream\n";
+    stc.writeToTxtStream(io);
+    io.flush();
+
+    myProcess.write(qByteArray);
+    myProcess.waitForBytesWritten();
+
+    qByteArray.clear();
+
 
 //    while(myProcess.waitForReadyRead(-1))
 //    {

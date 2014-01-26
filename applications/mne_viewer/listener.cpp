@@ -40,6 +40,9 @@
 //=============================================================================================================
 
 #include "listener.h"
+#include "interpreter.h"
+#include <mne/mne_sourceestimate.h>
+#include <iostream>
 
 
 //*************************************************************************************************************
@@ -52,6 +55,14 @@
 
 //*************************************************************************************************************
 //=============================================================================================================
+// USED NAMESPACES
+//=============================================================================================================
+
+using namespace MNELIB;
+
+
+//*************************************************************************************************************
+//=============================================================================================================
 // DEFINE MEMBER METHODS
 //=============================================================================================================
 
@@ -59,6 +70,7 @@ Listener::Listener(QObject *parent)
 : QThread(parent)
 , m_bIsRunning(false)
 {
+
 }
 
 
@@ -93,13 +105,23 @@ bool Listener::stop()
 
 void Listener::run()
 {
-
     QTextStream cin(stdin, QIODevice::ReadOnly);
+    QString input;
     while(!cin.atEnd() && m_bIsRunning)
     {
-        QString line = cin.readLine();
-        printf("Got input %s\n", line.toLatin1().data());
+        //QString line = cin.readLine();
+        cin >> input;
+
+        if(!input.compare("--stcstream") || !input.compare("-stcstream"))
+        {
+            QSharedPointer<MNELIB::MNESourceEstimate> stc(new MNELIB::MNESourceEstimate);
+            MNESourceEstimate::readFromTxtStream(cin, *stc);
+            emit (qobject_cast<Interpreter*>(this->parent()))->sourceEstimateAvailable(stc);
+            printf("stc stream received\n");
+        }
+        else
+            printf("Unknown command %s\n", input.toLatin1().data());
     }
 
-    printf("Finished\n");
+    printf("Listening ended\n");
 }

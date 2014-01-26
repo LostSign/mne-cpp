@@ -52,6 +52,8 @@ Interpreter::Interpreter(QObject *parent)
 : QObject(parent)
 , m_pListener(new Listener(this))
 {
+    qRegisterMetaType<QSharedPointer<MNELIB::MNESourceEstimate> >("QSharedPointer<MNELIB::MNESourceEstimate>");
+
 //    connect(worker, SIGNAL(error(QString)), this, SLOT(errorString(QString)));
 //    connect(thread, SIGNAL(started()), worker, SLOT(process()));
 //    connect(worker, SIGNAL(finished()), thread, SLOT(quit()));

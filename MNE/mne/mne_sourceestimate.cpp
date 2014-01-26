@@ -146,8 +146,14 @@ bool MNESourceEstimate::read(QIODevice &p_IODevice, MNESourceEstimate& p_stc)
     t_pStream->setByteOrder(QDataStream::BigEndian);
     t_pStream->setVersion(QDataStream::Qt_5_0);
 
-    if(!t_pStream->device()->open(QIODevice::ReadOnly))
-        return false;
+    bool bWasOpen = false;
+    if(t_pStream->device()->isOpen())
+        bWasOpen = true;
+    else
+    {
+        if(!t_pStream->device()->open(QIODevice::ReadOnly))
+            return false;
+    }
 
     QFile* t_pFile = qobject_cast<QFile*>(&p_IODevice);
     if(t_pFile)
@@ -186,10 +192,49 @@ bool MNESourceEstimate::read(QIODevice &p_IODevice, MNESourceEstimate& p_stc)
     p_stc.update_times();
 
     // close the file
-    t_pStream->device()->close();
+    if(!bWasOpen)
+        t_pStream->device()->close();
 
     printf("[done]\n");
 
+    return true;
+}
+
+
+//*************************************************************************************************************
+
+bool MNESourceEstimate::readFromTxtStream(QTextStream &p_qTextStream, MNESourceEstimate& p_stc)
+{
+    printf("Reading source estimate...");
+
+    // read start time in ms
+    p_qTextStream >> p_stc.tmin;
+    p_stc.tmin /= 1000;
+    // read sampling rate in ms
+    p_qTextStream >> p_stc.tstep;
+    p_stc.tstep /= 1000;
+    // read number of vertices
+    unsigned int t_nVertices;
+    p_qTextStream >> t_nVertices;
+    p_stc.vertices = VectorXi(t_nVertices);
+    // read the vertex indices
+    for(quint32 i = 0; i < t_nVertices; ++i)
+        p_qTextStream >> p_stc.vertices[i];
+    // read the number of timepts
+    quint32 t_nTimePts;
+    p_qTextStream >> t_nTimePts;
+    //
+    // read the data
+    //
+    p_stc.data = MatrixXd(t_nVertices, t_nTimePts);
+    float value;
+    for(qint32 i = 0; i < p_stc.data.array().size(); ++i)
+    {
+        p_qTextStream >> value;
+        p_stc.data.array()(i) = value;
+    }
+
+    printf("[done]\n");
     return true;
 }
 
@@ -205,10 +250,16 @@ bool MNESourceEstimate::write(QIODevice &p_IODevice)
     t_pStream->setByteOrder(QDataStream::BigEndian);
     t_pStream->setVersion(QDataStream::Qt_5_0);
 
-    if(!t_pStream->device()->open(QIODevice::WriteOnly))
+    bool bWasOpen = false;
+    if(t_pStream->device()->isOpen())
+        bWasOpen = true;
+    else
     {
-        printf("Failed to write source estimate!\n");
-        return false;
+        if(!t_pStream->device()->open(QIODevice::WriteOnly))
+        {
+            printf("Failed to write source estimate!\n");
+            return false;
+        }
     }
 
     QFile* t_pFile = qobject_cast<QFile*>(&p_IODevice);
@@ -235,7 +286,36 @@ bool MNESourceEstimate::write(QIODevice &p_IODevice)
         *t_pStream << (float)this->data.array()(i);
 
     // close the file
-    t_pStream->device()->close();
+    if(!bWasOpen)
+        t_pStream->device()->close();
+
+    printf("[done]\n");
+    return true;
+}
+
+
+//*************************************************************************************************************
+
+bool MNESourceEstimate::writeToTxtStream(QTextStream &p_qTextStream)
+{
+    printf("Write source estimate...");
+
+    // write start time in ms
+    p_qTextStream << 1000*this->tmin << "\n";
+    // write sampling rate in ms
+    p_qTextStream << 1000*this->tstep << "\n";
+    // write number of vertices
+    p_qTextStream << this->vertices.size() << "\n";
+    // write the vertex indices
+    for(qint32 i = 0; i < this->vertices.size(); ++i)
+        p_qTextStream << this->vertices[i] << "\n";
+    // write the number of timepts
+    p_qTextStream << this->data.cols() << "\n";
+    //
+    // write the data
+    //
+    for(quint32 i = 0; i < this->data.array().size(); ++i)
+        p_qTextStream << this->data.array()(i) << "\n";
 
     printf("[done]\n");
     return true;

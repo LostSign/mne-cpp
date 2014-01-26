@@ -60,6 +60,7 @@
 #include <QSharedPointer>
 #include <QList>
 #include <QIODevice>
+#include <QTextStream>
 
 
 //*************************************************************************************************************
@@ -153,12 +154,23 @@ public:
     *
     * Reads a source estimate from a given file
     *
-    * @param [in] p_IODevice    IO device to red the stc from.
+    * @param [in] p_IODevice    IO device to read the stc from.
     * @param [out] p_stc        the read stc
     *
     * @return true if successful, false otherwise
     */
     static bool read(QIODevice &p_IODevice, MNESourceEstimate& p_stc);
+
+    //=========================================================================================================
+    /**
+    * Reads a source estimate from a text stream
+    *
+    * @param [in] p_qTextStream The text stream to read the stc from.
+    * @param [out] p_stc        the read stc
+    *
+    * @return true if successful, false otherwise
+    */
+    static bool readFromTxtStream(QTextStream &p_qTextStream, MNESourceEstimate& p_stc);
 
     //=========================================================================================================
     /**
@@ -169,6 +181,16 @@ public:
     * @param [in] p_IODevice   IO device to write the stc to.
     */
     bool write(QIODevice &p_IODevice);
+
+    //=========================================================================================================
+    /**
+    * Writes a source estimate to a text stream
+    *
+    * @param [in] p_qTextStream The text stream to write the stc to.
+    *
+    * @return true if successful, false otherwise
+    */
+    bool writeToTxtStream(QTextStream &p_qTextStream);
 
     //=========================================================================================================
     /**

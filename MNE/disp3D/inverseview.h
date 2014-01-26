@@ -150,6 +150,9 @@ public:
     */
     void pushSourceEstimate(MNESourceEstimate &p_sourceEstimate);
 
+public slots:
+    void pushSourceEstimate(QSharedPointer<MNESourceEstimate> p_sourceEstimate);
+
 protected:
     //=========================================================================================================
     /**
