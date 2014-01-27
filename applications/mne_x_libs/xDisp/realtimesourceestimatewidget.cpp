@@ -108,8 +108,27 @@ RealTimeSourceEstimateWidget::RealTimeSourceEstimateWidget(QSharedPointer<RealTi
 , m_pRTMSE(pRTSE)
 , m_bInitialized(false)
 , m_bInitializationStarted(false)
+, count(0)
+, m_pRTSEWH(new RealTimeSourceEstimateWidgetHelper(this))
 {
-    connect(this,&RealTimeSourceEstimateWidget::startInit, this, &RealTimeSourceEstimateWidget::init);
+    qRegisterMetaType<QSharedPointer<MNELIB::MNESourceEstimate> >("QSharedPointer<MNELIB::MNESourceEstimate>");
+
+    m_qProcess.setProcessChannelMode(QProcess::SeparateChannels);
+    m_qProcess.start("mne_viewer", QProcess::Unbuffered | QProcess::ReadWrite);
+    if(!m_qProcess.waitForStarted(3000))
+        std::cout << "Subprocess couldn't be started" << std::endl;
+
+
+    m_qProcess.setReadChannel(QProcess::StandardOutput);
+
+    connect(&m_qProcess,&QProcess::readyReadStandardOutput, this, &RealTimeSourceEstimateWidget::processStandardOutput);
+
+    m_pRTSEWH->start();
+
+//    connect(this, &RealTimeSourceEstimateWidget::sourceEstimateAvailable, this, &RealTimeSourceEstimateWidget::pushSharedSourceEstimate);
+
+
+//    connect(this,&RealTimeSourceEstimateWidget::startInit, this, &RealTimeSourceEstimateWidget::init);
 }
 
 
@@ -117,6 +136,8 @@ RealTimeSourceEstimateWidget::RealTimeSourceEstimateWidget(QSharedPointer<RealTi
 
 RealTimeSourceEstimateWidget::~RealTimeSourceEstimateWidget()
 {
+    m_qProcess.close();
+
 //    // Clear sampling rate vector
 //    RealTimeSourceEstimateWidget::s_listSamplingRates.clear();
 }
@@ -128,18 +149,23 @@ void RealTimeSourceEstimateWidget::update(XMEASLIB::NewMeasurement::SPtr)
 {
     if(m_bInitialized)
     {
-        MNESourceEstimate stc = m_pRTMSE->getStc();
-        m_pView->pushSourceEstimate(stc);
-    }
-    else
-    {
-        if(!m_bInitializationStarted && !m_pRTMSE->getSrc().isEmpty())
+        if(count % 4 == 0)
         {
-            m_pRTMSE->m_bStcSend = false;
-            m_bInitializationStarted = true;
-            emit startInit();
+            m_qVectorSTC.append(m_pRTMSE->getStc());
+    ////        m_pView->pushSourceEstimate(stc);
         }
+        ++count;
+//        m_qProcess.waitForBytesWritten();
     }
+//    else
+//    {
+//        if(!m_bInitializationStarted && !m_pRTMSE->getSrc().isEmpty())
+//        {
+//            m_pRTMSE->m_bStcSend = false;
+//            m_bInitializationStarted = true;
+//            emit startInit();
+//        }
+//    }
 }
 
 
@@ -147,52 +173,86 @@ void RealTimeSourceEstimateWidget::update(XMEASLIB::NewMeasurement::SPtr)
 
 void RealTimeSourceEstimateWidget::init()
 {
-    if(this->initOpenGLWidget())
-    {
-        m_bInitialized = true;
-        m_pRTMSE->m_bStcSend = true;
-    }
-    else
-    {
-        m_bInitialized = false;
-        m_bInitializationStarted = false;
-    }
+//    if(this->initOpenGLWidget())
+//    {
+//        m_bInitialized = true;
+//        m_pRTMSE->m_bStcSend = true;
+//    }
+//    else
+//    {
+//        m_bInitialized = false;
+//        m_bInitializationStarted = false;
+//    }
 }
 
 
 //*************************************************************************************************************
 
-bool RealTimeSourceEstimateWidget::initOpenGLWidget()
+void RealTimeSourceEstimateWidget::processStandardOutput()
 {
-    if(     !m_pRTMSE->getSrc().isEmpty() &&
-            !m_pRTMSE->getAnnotSet()->isEmpty() &&
-            !m_pRTMSE->getSurfSet()->isEmpty())
+    while(m_qProcess.canReadLine())
     {
-        QList<Label> t_qListLabels;
-        QList<RowVector4i> t_qListRGBAs;
+        QString line = m_qProcess.readLine();
 
-        m_pRTMSE->getAnnotSet()->toLabels(*m_pRTMSE->getSurfSet().data(), t_qListLabels, t_qListRGBAs);
-
-        QHBoxLayout *layout = new QHBoxLayout(this);
-
-        m_pView = new InverseView(m_pRTMSE->getSrc(), t_qListLabels, t_qListRGBAs, 12, false);
-
-        if (m_pView->stereoType() != QGLView::RedCyanAnaglyph)
-            m_pView->camera()->setEyeSeparation(0.3f);
-
-        m_pWidgetView = QWidget::createWindowContainer(m_pView); //widget take owner ship of m_pView
-//        m_pContainer->setFocusPolicy(Qt::StrongFocus);
-        m_pWidgetView->setFocusPolicy(Qt::TabFocus);
-
-//        layout->addWidget(new QLineEdit(QLatin1String("A QLineEdit")));
-        layout->addWidget(m_pWidgetView);
-//        layout->addWidget(new QLineEdit(QLatin1String("A QLabel")));
-
-        return true;
+        if(line.indexOf("mne_viewer initialized") > -1)
+        {
+            m_bInitialized = true;
+            printf("%s", line.toLatin1().data());
+        }
     }
-    else
-        return false;
 }
+
+
+void RealTimeSourceEstimateWidget::pushSharedSourceEstimate(QSharedPointer<MNESourceEstimate> p_sourceEstimate)
+{
+//    QByteArray qByteArray;
+//    QTextStream io(&qByteArray, QIODevice::WriteOnly);
+
+//    io << "--stcstream\n";
+//    p_sourceEstimate->writeToTxtStream(io);
+//    io.flush();
+
+//    m_qProcess.write(qByteArray);
+//    m_qProcess.waitForBytesWritten();
+}
+
+
+
+////*************************************************************************************************************
+
+//bool RealTimeSourceEstimateWidget::initOpenGLWidget()
+//{
+////    if(     !m_pRTMSE->getSrc().isEmpty() &&
+////            !m_pRTMSE->getAnnotSet()->isEmpty() &&
+////            !m_pRTMSE->getSurfSet()->isEmpty())
+////    {
+////        QList<Label> t_qListLabels;
+////        QList<RowVector4i> t_qListRGBAs;
+
+////        m_pRTMSE->getAnnotSet()->toLabels(*m_pRTMSE->getSurfSet().data(), t_qListLabels, t_qListRGBAs);
+
+////        QHBoxLayout *layout = new QHBoxLayout(this);
+
+////        m_pView = new InverseView(m_pRTMSE->getSrc(), t_qListLabels, t_qListRGBAs, 12, false);
+
+////        if (m_pView->stereoType() != QGLView::RedCyanAnaglyph)
+////            m_pView->camera()->setEyeSeparation(0.3f);
+
+////        m_pWidgetView = QWidget::createWindowContainer(m_pView); //widget take owner ship of m_pView
+//////        m_pContainer->setFocusPolicy(Qt::StrongFocus);
+////        m_pWidgetView->setFocusPolicy(Qt::TabFocus);
+
+//////        layout->addWidget(new QLineEdit(QLatin1String("A QLineEdit")));
+////        layout->addWidget(m_pWidgetView);
+//////        layout->addWidget(new QLineEdit(QLatin1String("A QLabel")));
+
+////        return true;
+////    }
+////    else
+////        return false;
+
+//    return true;
+//}
 
 //*************************************************************************************************************
 //=============================================================================================================

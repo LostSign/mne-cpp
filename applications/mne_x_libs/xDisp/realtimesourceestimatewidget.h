@@ -44,6 +44,7 @@
 
 #include "xdisp_global.h"
 #include "newmeasurementwidget.h"
+#include "realtimesourceestimatewidgethelper.h"
 
 #include <disp3D/inverseview.h>
 #include <mne/mne_forwardsolution.h>
@@ -60,6 +61,7 @@
 #include <QPainterPath>
 #include <QMutex>
 #include <QThread>
+#include <QProcess>
 
 
 //*************************************************************************************************************
@@ -120,6 +122,8 @@ class XDISPSHARED_EXPORT RealTimeSourceEstimateWidget : public NewMeasurementWid
 {
     Q_OBJECT
 
+    friend class RealTimeSourceEstimateWidgetHelper;
+
 public:
     //=========================================================================================================
     /**
@@ -159,10 +163,17 @@ public:
     *
     * @return true when successful
     */
-    bool initOpenGLWidget();
+//    bool initOpenGLWidget();
+
+
+    void processStandardOutput();
+
+    void pushSharedSourceEstimate(QSharedPointer<MNESourceEstimate> p_sourceEstimate);
 
 signals:
     void startInit();
+
+    void sourceEstimateAvailable(QSharedPointer<MNELIB::MNESourceEstimate> stc);
 
 private:
 
@@ -174,8 +185,19 @@ private:
 
     QSharedPointer<RealTimeSourceEstimate> m_pRTMSE;    /**< The real-time source estimate measurement. */
 
+    QVector<MNELIB::MNESourceEstimate> m_qVectorSTC;
+
+    QProcess m_qProcess;
+
+    qint32 count;
+
+    RealTimeSourceEstimateWidgetHelper* m_pRTSEWH;
+
+    QMutex m_qMutexRTSEW;
 };
 
 } // NAMESPACE
+
+Q_DECLARE_METATYPE(MNELIB::MNESourceEstimate);
 
 #endif // REALTIMESOURCEESTIMATEWIDGET_H

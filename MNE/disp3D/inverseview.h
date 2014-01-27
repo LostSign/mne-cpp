@@ -150,8 +150,13 @@ public:
     */
     void pushSourceEstimate(MNESourceEstimate &p_sourceEstimate);
 
-public slots:
-    void pushSourceEstimate(QSharedPointer<MNESourceEstimate> p_sourceEstimate);
+    //=========================================================================================================
+    /**
+    * Appends a new source estimate to the internal inverse producer
+    *
+    * @param[in] p_sourceEstimate   Source estimate to push
+    */
+    void pushSharedSourceEstimate(QSharedPointer<MNESourceEstimate> p_sourceEstimate);
 
 protected:
     //=========================================================================================================

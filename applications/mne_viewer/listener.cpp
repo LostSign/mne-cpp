@@ -40,7 +40,6 @@
 //=============================================================================================================
 
 #include "listener.h"
-#include "interpreter.h"
 #include <mne/mne_sourceestimate.h>
 #include <iostream>
 
@@ -116,7 +115,7 @@ void Listener::run()
         {
             QSharedPointer<MNELIB::MNESourceEstimate> stc(new MNELIB::MNESourceEstimate);
             MNESourceEstimate::readFromTxtStream(cin, *stc);
-            emit (qobject_cast<Interpreter*>(this->parent()))->sourceEstimateAvailable(stc);
+            emit sourceEstimateAvailable(stc);
             printf("stc stream received\n");
         }
         else

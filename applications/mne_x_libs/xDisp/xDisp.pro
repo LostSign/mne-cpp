@@ -127,9 +127,13 @@ FORMS += \
     newrealtimemultisamplearraywidget.ui
 
 qtHaveModule(3d) {
-    SOURCES += realtimesourceestimatewidget.cpp
+    SOURCES += \
+        realtimesourceestimatewidget.cpp \
+        realtimesourceestimatewidgethelper.cpp
 
-    HEADERS += realtimesourceestimatewidget.h
+    HEADERS += \
+        realtimesourceestimatewidget.h \
+        realtimesourceestimatewidgethelper.h
 }
 
 UI_DIR = $${PWD}

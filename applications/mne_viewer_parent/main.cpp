@@ -41,7 +41,7 @@
 //=============================================================================================================
 
 #include <iostream>
-#include <mne/mne_sourceestimate.h>
+#include "mne_viewer_parent.h"
 
 
 //*************************************************************************************************************
@@ -50,9 +50,6 @@
 //=============================================================================================================
 
 #include <QtCore/QCoreApplication>
-#include <QProcess>
-#include <QDebug>
-#include <QFile>
 
 
 //*************************************************************************************************************
@@ -60,13 +57,13 @@
 // USED NAMESPACES
 //=============================================================================================================
 
-using namespace MNELIB;
 
 
 //*************************************************************************************************************
 //=============================================================================================================
 // MAIN
 //=============================================================================================================
+
 
 //=============================================================================================================
 /**
@@ -81,69 +78,7 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    std::cout << "Parent Process" << std::endl;
-
-    QStringList arguments;
-//    arguments << "-style" << "fusion";
-
-    QProcess myProcess;
-
-    myProcess.setProcessChannelMode(QProcess::ForwardedChannels);
-
-    myProcess.start("mne_viewer", QProcess::Unbuffered | QProcess::ReadWrite);
-
-    if(!myProcess.waitForStarted(3000))
-    {
-        std::cout << "Subprocess couldn't be started" << std::endl;
-    }
-
-    std::cout << "Subprocess started" << std::endl;
-
-//    QByteArray ba;
-//    qint32 count = 0;
-
-//    while(count < 100000)
-//    {
-//        ba = QByteArray("count\n");
-//        ba.prepend((QString("%1 ").arg(count)).toLatin1().data());
-//        myProcess.write(ba);
-
-//        myProcess.waitForBytesWritten();
-
-//        ++count;
-//    }
-
-
-    qint32 count = 0;
-    while(count < 100000)
-    {
-        qDebug() << "count" << count;
-        ++count;
-    }
-
-
-
-    QByteArray qByteArray;
-    QTextStream io(&qByteArray, QIODevice::WriteOnly);
-
-
-    QFile qFileSTC("./stc_test.fif");
-    MNESourceEstimate stc(qFileSTC);
-
-    io << "--stcstream\n";
-    stc.writeToTxtStream(io);
-    io.flush();
-
-    myProcess.write(qByteArray);
-    myProcess.waitForBytesWritten();
-
-    qByteArray.clear();
-
-
-//    while(myProcess.waitForReadyRead(-1))
-//    {
-//        qDebug() << myProcess.readAllStandardOutput();
-//    }
+    MNEViewerParent myTest;
 
     return a.exec();
 }

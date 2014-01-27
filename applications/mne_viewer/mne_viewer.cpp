@@ -30,7 +30,7 @@
 * POSSIBILITY OF SUCH DAMAGE.
 *
 *
-* @brief    Interpreter class implementation
+* @brief    MNEViewer class implementation
 *
 */
 
@@ -39,8 +39,17 @@
 // INCLUDES
 //=============================================================================================================
 
-#include "interpreter.h"
+#include "mne_viewer.h"
 #include "listener.h"
+
+
+//*************************************************************************************************************
+//=============================================================================================================
+// QT INCLUDES
+//=============================================================================================================
+
+#include <QSet>
+#include <QTextStream>
 
 
 //*************************************************************************************************************
@@ -48,23 +57,50 @@
 // DEFINE MEMBER METHODS
 //=============================================================================================================
 
-Interpreter::Interpreter(QObject *parent)
+MNEViewer::MNEViewer(QObject *parent)
 : QObject(parent)
 , m_pListener(new Listener(this))
+, m_qFileFwd("./MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif")
+, m_Fwd(m_qFileFwd)
+, m_annotSet("./MNE-sample-data/subjects/sample/label/lh.aparc.a2009s.annot","./MNE-sample-data/subjects/sample/label/rh.aparc.a2009s.annot")
+, m_surfSet("./MNE-sample-data/subjects/sample/surf/lh.white", "./MNE-sample-data/subjects/sample/surf/rh.white")
 {
     qRegisterMetaType<QSharedPointer<MNELIB::MNESourceEstimate> >("QSharedPointer<MNELIB::MNESourceEstimate>");
+
+    //ToDo overload toLabels using instead of t_surfSet rr of MNESourceSpace
+    m_annotSet.toLabels(m_surfSet, m_qListLabels, m_qListRGBAs);
+
+    //
+    // Cluster forward solution;
+    //
+    MNEForwardSolution t_clusteredFwd = m_Fwd.cluster_forward_solution(m_annotSet, 20);//40);
+
+    m_pView = QSharedPointer<InverseView>(new InverseView(t_clusteredFwd.src, m_qListLabels, m_qListRGBAs, 24, false));
+
+    if (m_pView->stereoType() != QGLView::RedCyanAnaglyph)
+        m_pView->camera()->setEyeSeparation(0.3f);
+
+    m_pView->resize(800, 600);
+    m_pView->setTitle(QString("Online Brain Monitoring"));
+    m_pView->show();
+
+    connect(m_pListener.data(), &Listener::sourceEstimateAvailable, m_pView.data(), &InverseView::pushSharedSourceEstimate);
 
 //    connect(worker, SIGNAL(error(QString)), this, SLOT(errorString(QString)));
 //    connect(thread, SIGNAL(started()), worker, SLOT(process()));
 //    connect(worker, SIGNAL(finished()), thread, SLOT(quit()));
 //    connect(worker, SIGNAL(finished()), worker, SLOT(deleteLater()));
 //    connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
+
     m_pListener->start();
+
+    std::cout << "mne_viewer initialized\n";
+    fflush(stdout);
 }
 
 //*************************************************************************************************************
 
-Interpreter::~Interpreter()
+MNEViewer::~MNEViewer()
 {
     if(m_pListener->isRunning())
         m_pListener->stop();

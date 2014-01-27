@@ -78,11 +78,11 @@ DESTDIR = $${MNE_BINARY_DIR}
 SOURCES += \
     main.cpp \
     listener.cpp \
-    interpreter.cpp
+    mne_viewer.cpp
 
 HEADERS += \
     listener.h \
-    interpreter.h
+    mne_viewer.h
 
 INCLUDEPATH += $${EIGEN_INCLUDE_DIR}
 INCLUDEPATH += $${MNE_INCLUDE_DIR}

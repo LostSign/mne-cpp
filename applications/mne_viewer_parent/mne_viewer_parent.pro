@@ -72,9 +72,11 @@ else {
 DESTDIR = $${MNE_BINARY_DIR}
 
 SOURCES += \
-    main.cpp
+    main.cpp \
+    mne_viewer_parent.cpp
 
 HEADERS += \
+    mne_viewer_parent.h
 
 INCLUDEPATH += $${EIGEN_INCLUDE_DIR}
 INCLUDEPATH += $${MNE_INCLUDE_DIR}

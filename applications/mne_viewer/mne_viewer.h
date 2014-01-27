@@ -1,6 +1,6 @@
 //=============================================================================================================
 /**
-* @file     lsitener.h
+* @file     mne_viewer.h
 * @author   Christoph Dinh <chdinh@nmr.mgh.harvard.edu>;
 *           Jens Haueisen <jens.haueisen@tu-ilmenau.de>;
 *           Matti Hamalainen <msh@nmr.mgh.harvard.edu>
@@ -30,12 +30,12 @@
 * POSSIBILITY OF SUCH DAMAGE.
 *
 *
-* @brief    Listener class declaration
+* @brief    MNEViewer class declaration
 *
 */
 
-#ifndef INTERPRETER_H
-#define INTERPRETER_H
+#ifndef MNEVIEWER_H
+#define MNEVIEWER_H
 
 //*************************************************************************************************************
 //=============================================================================================================
@@ -44,8 +44,17 @@
 
 #include <QObject>
 #include <QSharedPointer>
+#include <QFile>
+#include <QList>
 
-#include <mne/mne_sourceestimate.h>
+#include <fs/label.h>
+#include <fs/annotationset.h>
+#include <fs/surface.h>
+
+#include <fiff/fiff_evoked.h>
+
+#include <mne/mne_forwardsolution.h>
+#include <disp3D/inverseview.h>
 
 
 //*************************************************************************************************************
@@ -62,32 +71,41 @@ class Listener;
 //=============================================================================================================
 
 using namespace MNELIB;
+using namespace FSLIB;
+using namespace DISP3DLIB;
 
 
 //=============================================================================================================
 /**
-* Interpreter
+* MNEViewer
 *
-* @brief Interpreter
+* @brief MNEViewer
 */
-class Interpreter : public QObject
+class MNEViewer : public QObject
 {
     Q_OBJECT
 public:
-    explicit Interpreter(QObject *parent = 0);
+    explicit MNEViewer(QObject *parent = 0);
 
-    ~Interpreter();
-
-signals:
-    void sourceEstimateAvailable(QSharedPointer<MNELIB::MNESourceEstimate> stc);
+    ~MNEViewer();
 
 public slots:
 
 private:
     QSharedPointer<Listener>    m_pListener;
 
+    QFile                       m_qFileFwd;
+    MNEForwardSolution          m_Fwd;
+//    MNEForwardSolution          m_clusteredFwd;
+
+    AnnotationSet               m_annotSet;
+    SurfaceSet                  m_surfSet;
+
+    QList<Label>                m_qListLabels;
+    QList<RowVector4i>          m_qListRGBAs;
+
+    QSharedPointer<InverseView> m_pView;
+
 };
 
-Q_DECLARE_METATYPE(MNELIB::MNESourceEstimate);
-
-#endif // INTERPRETER_H
+#endif // MNEVIEWER_H

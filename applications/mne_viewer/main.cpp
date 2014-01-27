@@ -40,19 +40,8 @@
 // INCLUDES
 //=============================================================================================================
 
-#include <fs/label.h>
-#include <fs/surface.h>
-#include <fs/annotationset.h>
-
-#include <fiff/fiff_evoked.h>
-#include <mne/mne_sourceestimate.h>
-#include <inverse/minimumNorm/minimumnorm.h>
-
-#include <disp3D/inverseview.h>
-
+#include "mne_viewer.h"
 #include <iostream>
-
-#include "interpreter.h"
 
 
 //*************************************************************************************************************
@@ -61,20 +50,12 @@
 //=============================================================================================================
 
 #include <QGuiApplication>
-#include <QSet>
-#include <QTextStream>
 
 
 //*************************************************************************************************************
 //=============================================================================================================
 // USED NAMESPACES
 //=============================================================================================================
-
-using namespace MNELIB;
-using namespace FSLIB;
-using namespace FIFFLIB;
-using namespace INVERSELIB;
-using namespace DISP3DLIB;
 
 
 //*************************************************************************************************************
@@ -95,64 +76,32 @@ int main(int argc, char *argv[])
 {
     QGuiApplication a(argc, argv);
 
-    Interpreter* m_pInterpreter = new Interpreter;
+    MNEViewer* t_pMNEViewer = new MNEViewer;
 
-
-    //########################################################################################
-    // Source Estimate
-
-    QFile t_fileFwd("./MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif");
-
-    MNEForwardSolution t_Fwd(t_fileFwd);
-    if(t_Fwd.isEmpty())
-        return 1;
-
-
-    AnnotationSet t_annotSet("./MNE-sample-data/subjects/sample/label/lh.aparc.a2009s.annot","./MNE-sample-data/subjects/sample/label/rh.aparc.a2009s.annot");
-    SurfaceSet t_surfSet("./MNE-sample-data/subjects/sample/surf/lh.white", "./MNE-sample-data/subjects/sample/surf/rh.white");
-
-    QList<Label> t_qListLabels;
-    QList<RowVector4i> t_qListRGBAs;
-
-    //ToDo overload toLabels using instead of t_surfSet rr of MNESourceSpace
-    t_annotSet.toLabels(t_surfSet, t_qListLabels, t_qListRGBAs);
-
-    InverseView view(t_Fwd.src, t_qListLabels, t_qListRGBAs, 24, true);
-
-    if (view.stereoType() != QGLView::RedCyanAnaglyph)
-        view.camera()->setEyeSeparation(0.3f);
-    QStringList args = QCoreApplication::arguments();
-    int w_pos = args.indexOf("-width");
-    int h_pos = args.indexOf("-height");
-    if (w_pos >= 0 && h_pos >= 0)
-    {
-        bool ok = true;
-        int w = args.at(w_pos + 1).toInt(&ok);
-        if (!ok)
-        {
-            qWarning() << "Could not parse width argument:" << args;
-            return 1;
-        }
-        int h = args.at(h_pos + 1).toInt(&ok);
-        if (!ok)
-        {
-            qWarning() << "Could not parse height argument:" << args;
-            return 1;
-        }
-        view.resize(w, h);
-    }
-    else
-    {
-        view.resize(800, 600);
-    }
-    view.setTitle(QString("Online Brain Monitoring"));
-    view.show();
-
-
-    QObject::connect(m_pInterpreter, SIGNAL(sourceEstimateAvailable(QSharedPointer<MNESourceEstimate>)), &view, SLOT(pushSourceEstimate(QSharedPointer<MNESourceEstimate>)));
 
 //    //Push Estimate
 //    view.pushSourceEstimate(sourceEstimate);
+
+//    QStringList args = QCoreApplication::arguments();
+//    int w_pos = args.indexOf("-width");
+//    int h_pos = args.indexOf("-height");
+//    if (w_pos >= 0 && h_pos >= 0)
+//    {
+//        bool ok = true;
+//        int w = args.at(w_pos + 1).toInt(&ok);
+//        if (!ok)
+//        {
+//            qWarning() << "Could not parse width argument:" << args;
+//            return 1;
+//        }
+//        int h = args.at(h_pos + 1).toInt(&ok);
+//        if (!ok)
+//        {
+//            qWarning() << "Could not parse height argument:" << args;
+//            return 1;
+//        }
+//        m_pView->resize(w, h);
+//    }
 
     return a.exec();
 }

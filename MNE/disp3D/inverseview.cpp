@@ -127,10 +127,11 @@ void InverseView::pushSourceEstimate(MNESourceEstimate &p_sourceEstimate)
 
 //*************************************************************************************************************
 
-void InverseView::pushSourceEstimate(QSharedPointer<MNESourceEstimate> p_sourceEstimate)
+void InverseView::pushSharedSourceEstimate(QSharedPointer<MNESourceEstimate> p_sourceEstimate)
 {
-    std::cout << "STC pushed\n";
-    m_pInverseViewProducer->pushSourceEstimate(*p_sourceEstimate);
+    MNESourceEstimate t_sourceEstimate(*p_sourceEstimate.data());
+
+    m_pInverseViewProducer->pushSourceEstimate(t_sourceEstimate);
 }
 
 
