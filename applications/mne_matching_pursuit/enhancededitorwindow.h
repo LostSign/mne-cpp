@@ -64,10 +64,14 @@
 
 
 using namespace Eigen;
-namespace Ui
+
+//*************************************************************************************************************
+//=============================================================================================================
+// DEFINE NAMESPACE MNEMatchingPursuit
+//=============================================================================================================
+
+namespace MNEMatchingPursuit
 {
-    class Enhancededitorwindow;
-}
 
 class Enhancededitorwindow : public QWidget
 {
@@ -188,5 +192,6 @@ private:
     qreal calc_end_value(qreal startValue, qreal linStepValue);
     //=======================================================================================================
 };
+}
 
 #endif // ENHANCEDEDITORWINDOW_H

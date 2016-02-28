@@ -4,9 +4,13 @@
 #include <QWidget>
 #include <QStandardItem>
 
-namespace Ui {
-class settingwindow;
-}
+//*************************************************************************************************************
+//=============================================================================================================
+// DEFINE NAMESPACE MNEMatchingPursuit
+//=============================================================================================================
+
+namespace MNEMatchingPursuit
+{
 
 class settingwindow : public QWidget
 {
@@ -46,5 +50,6 @@ private:
     void fill_signal_type_combobox();
     void closeEvent(QCloseEvent * event);
 };
+} //NAMESPACE
 
 #endif // SETTINGWINDOW_H

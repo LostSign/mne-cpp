@@ -669,8 +669,8 @@ QTabBar::tab:only-one {
 	padding-left: 0px
 }</string>
           </property>
-          <property name="tabsClosable">
-           <bool>true</bool>
+          <property name="currentIndex">
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tw_Tab1">
            <attribute name="title">
@@ -692,61 +692,8 @@ QTabBar::tab:only-one {
             <property name="spacing">
              <number>4</number>
             </property>
-            <item row="0" column="0">
-             <widget class="QLabel" name="lb_InputSignal">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>18</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;signal&lt;/span&gt;&lt;/p&gt;&lt;p&gt;chosen input signal only the displayed epoch and channels will be decomposed&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-              </property>
-              <property name="text">
-               <string>signal:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="0">
-             <widget class="QLabel" name="lb_Res">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>18</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;difference&lt;/span&gt;&lt;/p&gt;&lt;p&gt;difference between input signal and all selected atoms&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-              </property>
-              <property name="text">
-               <string>difference:</string>
-              </property>
-             </widget>
+            <item row="1" column="0" colspan="3">
+             <layout class="QVBoxLayout" name="l_Graph"/>
             </item>
             <item row="2" column="0">
              <widget class="QLabel" name="lb_AtomsSum">
@@ -776,23 +723,20 @@ QTabBar::tab:only-one {
               </property>
              </widget>
             </item>
-            <item row="4" column="2">
-             <widget class="QLabel" name="lb_residual_energy">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
+            <item row="5" column="0" colspan="3">
+             <layout class="QVBoxLayout" name="l_res"/>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLabel" name="lb_signal_energy_text">
               <property name="minimumSize">
                <size>
-                <width>45</width>
+                <width>230</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>45</width>
+                <width>230</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -804,23 +748,17 @@ QTabBar::tab:only-one {
               </property>
              </widget>
             </item>
-            <item row="0" column="2">
-             <widget class="QLabel" name="lb_signal_energy">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
+            <item row="2" column="1">
+             <widget class="QLabel" name="lb_approx_energy_text">
               <property name="minimumSize">
                <size>
-                <width>45</width>
+                <width>230</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>45</width>
+                <width>230</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -860,17 +798,51 @@ QTabBar::tab:only-one {
               </property>
              </widget>
             </item>
-            <item row="2" column="1">
-             <widget class="QLabel" name="lb_approx_energy_text">
+            <item row="0" column="0">
+             <widget class="QLabel" name="lb_InputSignal">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="minimumSize">
                <size>
-                <width>230</width>
+                <width>0</width>
+                <height>18</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;signal&lt;/span&gt;&lt;/p&gt;&lt;p&gt;chosen input signal only the displayed epoch and channels will be decomposed&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="text">
+               <string>signal:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <widget class="QLabel" name="lb_signal_energy">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>45</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>230</width>
+                <width>45</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -882,38 +854,34 @@ QTabBar::tab:only-one {
               </property>
              </widget>
             </item>
-            <item row="6" column="0" colspan="3">
-             <layout class="QVBoxLayout" name="l_XAxis">
-              <property name="bottomMargin">
-               <number>0</number>
-              </property>
-             </layout>
-            </item>
             <item row="3" column="0" colspan="3">
              <layout class="QVBoxLayout" name="l_atoms"/>
             </item>
-            <item row="5" column="0" colspan="3">
-             <layout class="QVBoxLayout" name="l_res"/>
-            </item>
-            <item row="0" column="1">
-             <widget class="QLabel" name="lb_signal_energy_text">
+            <item row="4" column="0">
+             <widget class="QLabel" name="lb_Res">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="minimumSize">
                <size>
-                <width>230</width>
-                <height>0</height>
+                <width>0</width>
+                <height>18</height>
                </size>
               </property>
-              <property name="maximumSize">
-               <size>
-                <width>230</width>
-                <height>16777215</height>
-               </size>
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;difference&lt;/span&gt;&lt;/p&gt;&lt;p&gt;difference between input signal and all selected atoms&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
-               <string/>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               <string>difference:</string>
               </property>
              </widget>
             </item>
@@ -939,10 +907,52 @@ QTabBar::tab:only-one {
               </property>
              </widget>
             </item>
-            <item row="1" column="0" colspan="3">
-             <layout class="QVBoxLayout" name="l_Graph"/>
+            <item row="4" column="2">
+             <widget class="QLabel" name="lb_residual_energy">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>45</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>45</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="0" colspan="3">
+             <layout class="QVBoxLayout" name="l_XAxis">
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+             </layout>
             </item>
            </layout>
+          </widget>
+          <widget class="QWidget" name="tab">
+           <attribute name="title">
+            <string>TF-Overview</string>
+           </attribute>
+          </widget>
+          <widget class="QWidget" name="tw_Tab2">
+           <attribute name="title">
+            <string>TF-Plot</string>
+           </attribute>
           </widget>
          </widget>
         </widget>

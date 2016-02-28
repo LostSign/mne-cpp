@@ -62,6 +62,7 @@
 // USED NAMESPACES
 //=============================================================================================================
 
+using namespace MNEMatchingPursuit;
 using namespace MNELIB;
 using namespace UTILSLIB;
 
