@@ -59,7 +59,7 @@ using namespace MNEMatchingPursuit;
 //constructor
 processdurationmessagebox::processdurationmessagebox(QWidget *parent):QDialog(parent),ui(new Ui::processdurationmessagebox)
 {
-    Ui->setupUi(this);
+    ui->setupUi(this);
 }
 
 //*****************************************************************************************************************
