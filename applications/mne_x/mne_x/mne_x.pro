@@ -130,7 +130,15 @@ unix:!macx {
 macx {
     # === Mac ===
     QMAKE_RPATHDIR += @executable_path/../Frameworks
-    QMAKE_RPATHDIR += @executable_path/../libs
+
+    # Copy Resource folder to app bundle
+    mnexrc.path = Contents/MacOS
+    mnexrc.files = $${DESTDIR}/mne_x_libs
+    QMAKE_BUNDLE_DATA += mnexrc
+
+    plugins.path = Contents/MacOS
+    plugins.files = $${DESTDIR}/mne_x_plugins
+    QMAKE_BUNDLE_DATA += plugins
 
 #    isEmpty(TARGET_EXT) {
 #        TARGET_CUSTOM_EXT = .app

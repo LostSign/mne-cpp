@@ -1,14 +1,15 @@
 //=============================================================================================================
 /**
-* @file     dummytoolbox.h
-* @author   Lorenz Esch <Lorenz.Esch@tu-ilmenau.de>;
-*           Matti Hamalainen <msh@nmr.mgh.harvard.edu>
+* @file     sphara.cpp
+* @author   Lorenz Esch <lorenz.esch@tu-ilmenau.de>;
+*           Uwe Graichen <uwe.graichen@tu-ilmenau.de>;
+*           Matti Hamalainen <msh@nmr.mgh.harvard.edu>;
 * @version  1.0
-* @date     January, 2016
+* @date     February, 2016
 *
 * @section  LICENSE
 *
-* Copyright (C) 2016, Lorenz Esch and Matti Hamalainen. All rights reserved.
+* Copyright (C) 2014, Lorenz Esch and Matti Hamalainen. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that
 * the following conditions are met:
@@ -29,92 +30,79 @@
 * POSSIBILITY OF SUCH DAMAGE.
 *
 *
-* @brief    Contains the declaration of the NoiseReductionOptionsWidget class.
+* @brief    Implementation of the Sphara class
 *
 */
-
-#ifndef NOISEREDUCTIONOPTIONSWIDGET_H
-#define NOISEREDUCTIONOPTIONSWIDGET_H
 
 //*************************************************************************************************************
 //=============================================================================================================
 // INCLUDES
 //=============================================================================================================
 
-#include "../ui_noisereductionoptionswidget.h"
+#include "sphara.h"
 
 
 //*************************************************************************************************************
 //=============================================================================================================
-// QT INCLUDES
+// USED NAMESPACES
 //=============================================================================================================
 
-#include <QWidget>
+using namespace UTILSLIB;
 
 
 //*************************************************************************************************************
 //=============================================================================================================
-// DEFINE NAMESPACE NoiseReductionPlugin
+// DEFINE MEMBER METHODS
 //=============================================================================================================
 
-namespace NoiseReductionPlugin
+Sphara::Sphara()
 {
 
-
-//*************************************************************************************************************
-//=============================================================================================================
-// FORWARD DECLARATIONS
-//=============================================================================================================
-
-class NoiseReduction;
-
-
-//=============================================================================================================
-/**
-* DECLARE CLASS NoiseReductionOptionsWidget
-*
-* @brief The NoiseReductionOptionsWidget class provides a NoiseReduction option toolbar widget structure.
-*/
 }
-class NoiseReductionOptionsWidget : public QWidget
+
+
+//*************************************************************************************************************
+
+MatrixXd Sphara::makeSpharaProjector(const MatrixXd& matBaseFct, const VectorXi& vecIndices, int iOperatorDim, int iNBaseFct, int skip)
 {
-    Q_OBJECT
+    MatrixXd matSpharaOperator = MatrixXd::Identity(iOperatorDim, iOperatorDim);
 
-public:
-    typedef QSharedPointer<NoiseReductionOptionsWidget> SPtr;         /**< Shared pointer type for NoiseReductionOptionsWidget. */
-    typedef QSharedPointer<NoiseReductionOptionsWidget> ConstSPtr;    /**< Const shared pointer type for NoiseReductionOptionsWidget. */
+    //Remove unwanted base functions
+    MatrixXd matSpharaGradCut = matBaseFct.block(0,0,matBaseFct.rows(),iNBaseFct);
+    MatrixXd matSpharaMultGrad = matSpharaGradCut * matSpharaGradCut.transpose().eval();
 
-    //=========================================================================================================
-    /**
-    * Constructs a DummyToolbox.
-    */
-    explicit NoiseReductionOptionsWidget(NoiseReductionPlugin::NoiseReduction* toolbox, QWidget* parent = 0);
+    //Create the SPHARA operator
+    int rowIndex = 0;
+    int colIndex = 0;
 
-    //=========================================================================================================
-    /**
-    * Destroys the DummyToolbox.
-    */
-    ~NoiseReductionOptionsWidget();
+    for(int i = 0; i<=skip; i++) {
+        for(int r = i; r<vecIndices.rows(); r+=1+skip) {
+            for(int c = i; c<vecIndices.rows(); c+=1+skip) {
+                if((r < vecIndices.rows() || c < vecIndices.rows()) && (rowIndex < matSpharaMultGrad.rows() || colIndex < matSpharaMultGrad.cols())) {
+                    matSpharaOperator(vecIndices(r),vecIndices(c)) = matSpharaMultGrad(rowIndex,colIndex);
+                } else {
+                    qWarning()<<"Sphara::makeSpharaProjector - Index is out of range. Returning Zero matrix.";
+                    matSpharaOperator.setZero();
+                    return matSpharaOperator;
+                }
 
-    //=========================================================================================================
-    /**
-    * Set the acquisition system type (BabyMEG, VecotrView, EEG).
-    *
-    * @param[in] sSystem    The type of the acquisition system.
-    */
-    void setAcquisitionSystem(const QString &sSystem);
+                ++colIndex;
+            }
 
-protected slots:
-    //=========================================================================================================
-    /**
-    * Call this slot whenever the number basis functions changed.
-    */
-    void onNBaseFctsChanged();
+            colIndex = 0;
+            ++rowIndex;
+        }
 
-private:
-    Ui::NoiseReductionOptionsWidgetClass*   ui;                         /**< The UI class specified in the designer. */
+        rowIndex = 0;
+    }
 
-    NoiseReductionPlugin::NoiseReduction*   m_pNoiseReductionToolbox;
-};
+    return matSpharaOperator;
+}
 
-#endif // NOISEREDUCTIONOPTIONSWIDGET_H
+
+
+
+
+
+
+

@@ -44,6 +44,7 @@
 
 #include "noisereduction_global.h"
 
+#include <utils/filterTools/sphara.h>
 #include <utils/ioutils.h>
 
 #include <mne_x/Interfaces/IAlgorithm.h>
@@ -130,6 +131,14 @@ public:
 public slots:
     //=========================================================================================================
     /**
+    * Set the acquisition system type (BabyMEG, VecotrView, EEG).
+    *
+    * @param[in] sSystem    The type of the acquisition system.
+    */
+    void setAcquisitionSystem(const QString &sSystem);
+
+    //=========================================================================================================
+    /**
     * Set the active flag for SPHARA processing.
     *
     * @param[in] state    The new activity flag.
@@ -140,9 +149,10 @@ public slots:
     /**
     * Set the number of base functions to keep for SPHARA processing.
     *
-    * @param[in] nBaseFcts    The number of base functions to keep.
+    * @param[in] nBaseFctsGrad    The number of grad/mag base functions to keep.
+    * @param[in] nBaseFctsMag     The number of grad/mag base functions to keep.
     */
-    void setSpharaNBaseFcts(int nBaseFcts);
+    void setSpharaNBaseFcts(int nBaseFctsGrad, int nBaseFctsMag);
 
 protected:
     //=========================================================================================================
@@ -159,54 +169,38 @@ protected:
 
     //=========================================================================================================
     /**
-    * Read the SPHARA matrices.
+    * Init the SPHARA method.
     */
-    void readSpharaMatrix();
+    void initSphara();
 
     //=========================================================================================================
     /**
     * Create/Update the SPHARA projection operator.
     */
-    void creatSpharaOperator();
-
-    //=========================================================================================================
-    /**
-    * Read Eigen Matrix from file
-    *
-    * @param[out] out       output eigen value
-    * @param[in] path       path and file name to read from
-    */
-    template<typename T>
-    void read_eigen_matrix(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& out, const QString& path);
-
-    //=========================================================================================================
-    /**
-    * Write Eigen Matrix to file
-    *
-    * @param[in] in         input eigen value which is to be written to file
-    * @param[in] path       path and file name to write to
-    */
-    template<typename T>
-    static void write_eigen_matrix(const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& in, const QString& path);
+    void createSpharaOperator();
 
 private:
-    QMutex              m_mutex;                    /**< The threads mutex.*/
+    QMutex              m_mutex;                        /**< The threads mutex.*/
 
-    bool                m_bIsRunning;               /**< Flag whether thread is running.*/
-    bool                m_bSpharaActive;            /**< Flag whether thread is running.*/
+    bool                m_bIsRunning;                   /**< Flag whether thread is running.*/
+    bool                m_bSpharaActive;                /**< Flag whether thread is running.*/
 
-    int                 m_iNBaseFcts;               /**< the number of base functions to use for calculating the sphara opreator.*/
-    QString             m_sCurrentSystem;           /**< The current acquisition system (EEG, babyMEG, VectorView).*/
+    int                 m_iNBaseFctsFirst;              /**< The number of grad/inner base functions to use for calculating the sphara opreator.*/
+    int                 m_iNBaseFctsSecond;             /**< The number of grad/outer base functions to use for calculating the sphara opreator.*/
+    QString             m_sCurrentSystem;               /**< The current acquisition system (EEG, babyMEG, VectorView).*/
 
-    Eigen::MatrixXd     m_matSpharaMultVVMag;       /**< The VectorView gradiometer SPHARA operator.*/
-    Eigen::MatrixXd     m_matSpharaMultVVGrad;      /**< The VectorView magnetometer SPHARA operator.*/
-    Eigen::MatrixXd     m_matSpharaMultBMInner;     /**< The babyMEG inner layer SPHARA operator.*/
-    Eigen::MatrixXd     m_matSpharaMultBMOuter;     /**< The babyMEG outer layer SPHARA operator.*/
+    Eigen::VectorXi     indicesFirstVV;                 /**< The indices of the channels to pick for the first SPHARA oerpator in case of a VectorView system.*/
+    Eigen::VectorXi     indicesSecondVV;                /**< The indices of the channels to pick for the second SPHARA oerpator in case of a VectorView system.*/
+    Eigen::VectorXi     indicesFirstBabyMEG;            /**< The indices of the channels to pick for the first SPHARA oerpator in case of a BabyMEG system.*/
+    Eigen::VectorXi     indicesSecondBabyMEG;           /**< The indices of the channels to pick for the second SPHARA oerpator in case of a BabyMEG system.*/
 
-    Eigen::MatrixXd     m_matSpharaVVGradFull;      /**< The VectorView gradiometer basis functions.*/
-    Eigen::MatrixXd     m_matSpharaVVMagFull;       /**< The VectorView magnetometer basis functions.*/
-    Eigen::MatrixXd     m_matSpharaBabyMEGInnerFull;/**< The babyMEG inner layer basis functions.*/
-    Eigen::MatrixXd     m_matSpharaBabyMEGOuterFull;/**< The babyMEG outer layer basis functions.*/
+    Eigen::MatrixXd     m_matSpharaMultFirst;           /**< The final first SPHARA operator (in case of babymeg this is the inner layer, in case of vector view these are the gradiometers).*/
+    Eigen::MatrixXd     m_matSpharaMultSecond;          /**< The final second magnetometer SPHARA operator (in case of babymeg this is the outer layer, in case of vector view these are the magnetometers).*/
+
+    Eigen::MatrixXd     m_matSpharaVVGradLoaded;        /**< The loaded VectorView gradiometer basis functions.*/
+    Eigen::MatrixXd     m_matSpharaVVMagLoaded;         /**< The loaded VectorView magnetometer basis functions.*/
+    Eigen::MatrixXd     m_matSpharaBabyMEGInnerLoaded;  /**< The loaded babyMEG inner layer basis functions.*/
+    Eigen::MatrixXd     m_matSpharaBabyMEGOuterLoaded;  /**< The loaded babyMEG outer layer basis functions.*/
 
     FIFFLIB::FiffInfo::SPtr                         m_pFiffInfo;                /**< Fiff measurement info.*/
 
@@ -217,7 +211,6 @@ private:
 
     MNEX::PluginInputData<XMEASLIB::NewRealTimeMultiSampleArray>::SPtr      m_pNoiseReductionInput;      /**< The NewRealTimeMultiSampleArray of the NoiseReduction input.*/
     MNEX::PluginOutputData<XMEASLIB::NewRealTimeMultiSampleArray>::SPtr     m_pNoiseReductionOutput;     /**< The NewRealTimeMultiSampleArray of the NoiseReduction output.*/
-
 
 signals:
     //=========================================================================================================

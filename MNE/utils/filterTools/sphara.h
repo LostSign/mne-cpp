@@ -1,14 +1,15 @@
 //=============================================================================================================
 /**
-* @file     dummytoolbox.cpp
-* @author   Christoph Dinh <chdinh@nmr.mgh.harvard.edu>;
-*           Matti Hamalainen <msh@nmr.mgh.harvard.edu>
+* @file     sphara.h
+* @author   Lorenz Esch <lorenz.esch@tu-ilmenau.de>;
+*           Uwe Graichen <uwe.graichen@tu-ilmenau.de>;
+*           Matti Hamalainen <msh@nmr.mgh.harvard.edu>;
 * @version  1.0
-* @date     February, 2013
+* @date     February, 2016
 *
 * @section  LICENSE
 *
-* Copyright (C) 2013, Christoph Dinh and Matti Hamalainen. All rights reserved.
+* Copyright (C) 2016, Lorenz Esch and Matti Hamalainen. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that
 * the following conditions are met:
@@ -29,17 +30,44 @@
 * POSSIBILITY OF SUCH DAMAGE.
 *
 *
-* @brief    Contains the implementation of the NoiseReductionOptionsWidget class.
+* @brief    Declaration of the Sphara class
 *
 */
+
+#ifndef SPHARA_H
+#define SPHARA_H
 
 //*************************************************************************************************************
 //=============================================================================================================
 // INCLUDES
 //=============================================================================================================
 
-#include "NoiseReductionOptionswidget.h"
-#include "../noisereduction.h"
+#include "../utils_global.h"
+
+
+//*************************************************************************************************************
+//=============================================================================================================
+// Qt INCLUDES
+//=============================================================================================================
+
+#include <QDebug>
+
+
+//*************************************************************************************************************
+//=============================================================================================================
+// Eigen INCLUDES
+//=============================================================================================================
+
+#include <Eigen/Core>
+
+
+//*************************************************************************************************************
+//=============================================================================================================
+// DEFINE NAMESPACE UTILSLIB
+//=============================================================================================================
+
+namespace UTILSLIB
+{
 
 
 //*************************************************************************************************************
@@ -47,74 +75,46 @@
 // USED NAMESPACES
 //=============================================================================================================
 
-using namespace NoiseReductionPlugin;
+using namespace Eigen;
 
 
 //*************************************************************************************************************
 //=============================================================================================================
-// DEFINE MEMBER METHODS
+// DEFINES
 //=============================================================================================================
 
-NoiseReductionOptionsWidget::NoiseReductionOptionsWidget(NoiseReduction* toolbox, QWidget* parent)
-: QWidget(parent, Qt::Window)
-, ui(new Ui::NoiseReductionOptionsWidgetClass)
-, m_pNoiseReductionToolbox(toolbox)
+
+//=============================================================================================================
+/**
+* Creates a SPHARA operator.
+*
+* @brief Creates a SPHARA operator.
+*/
+class UTILSSHARED_EXPORT Sphara
 {
-    this->setWindowTitle("Noise reduction options");
+public:   
+    //=========================================================================================================
+    /**
+    * Constructs a Sphara object.
+    *
+    */
+    Sphara();
 
-    ui->setupUi(this);
+    //=========================================================================================================
+    /**
+    * Constructs a SPHARA operator.
+    *
+    * @param [in] matBaseFct        The SPHARA basis functions.
+    * @param [in] vecIndices        The indices of the positions in the final oeprator which are to be filled with the basis functions weights (i.e. these indices could respond to the indices of gradioemteres in a VectorView system).
+    * @param [in] iOperatorDim      The dimensions of the final SPHARA operator. Make sure that these correspond to the dimensions of the data matrix you want tol multiply with the SPHARA operator.
+    * @param [in] iNBaseFct         The number of SPHARA basis functions to take.
+    * @param [in] skip              The value to skip when reading the vecIndices variabel. I.e. use this when dealing with VectorView triplets, which include two gradiometers.
+    *
+    * @return Returns the final SPHARA operator with dimensions (iOperatorDim,iOperatorDim).
+    */
+    static MatrixXd makeSpharaProjector(const MatrixXd& matBaseFct, const VectorXi& vecIndices, int iOperatorDim, int iNBaseFct, int skip = 0);
+};
 
-    //Do the connects. Always connect GUI elemts after ui.setpUi has been called
-    connect(ui->m_checkBox_activateSphara, static_cast<void (QCheckBox::*)(bool)>(&QCheckBox::clicked),
-            m_pNoiseReductionToolbox, &NoiseReduction::setSpharaMode);
-    connect(ui->m_spinBox_nBaseFctsMag, static_cast<void (QSpinBox::*)()>(&QSpinBox::editingFinished),
-            this, &NoiseReductionOptionsWidget::onNBaseFctsChanged);
-    connect(ui->m_spinBox_nBaseFctsGrad, static_cast<void (QSpinBox::*)()>(&QSpinBox::editingFinished),
-            this, &NoiseReductionOptionsWidget::onNBaseFctsChanged);
-    connect(ui->m_comboBox_acquisitionSystem, static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
-            m_pNoiseReductionToolbox, &NoiseReduction::setAcquisitionSystem);
-    connect(ui->m_comboBox_acquisitionSystem, static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
-            this, &NoiseReductionOptionsWidget::setAcquisitionSystem);
-}
+} // NAMESPACE UTILSLIB
 
-
-//*************************************************************************************************************
-
-NoiseReductionOptionsWidget::~NoiseReductionOptionsWidget()
-{
-    delete ui;
-}
-
-
-//*************************************************************************************************************
-
-void NoiseReductionOptionsWidget::onNBaseFctsChanged()
-{
-    m_pNoiseReductionToolbox->setSpharaNBaseFcts(ui->m_spinBox_nBaseFctsGrad->value(), ui->m_spinBox_nBaseFctsMag->value());
-}
-
-
-//*************************************************************************************************************
-
-void NoiseReductionOptionsWidget::setAcquisitionSystem(const QString &sSystem)
-{
-    if(sSystem == "VectorView") {
-        ui->m_label_nBaseFctsMag->setText("Mag");
-        ui->m_spinBox_nBaseFctsMag->setMaximum(102);
-        ui->m_spinBox_nBaseFctsMag->setValue(102);
-
-        ui->m_label_nBaseFctsGrad->setText("Grad");
-        ui->m_spinBox_nBaseFctsGrad->setMaximum(102);
-        ui->m_spinBox_nBaseFctsGrad->setValue(102);
-    }
-
-    if(sSystem == "BabyMEG") {
-        ui->m_label_nBaseFctsMag->setText("Outer layer");
-        ui->m_spinBox_nBaseFctsMag->setMaximum(105);
-        ui->m_spinBox_nBaseFctsMag->setValue(105);
-
-        ui->m_label_nBaseFctsGrad->setText("Inner layer");
-        ui->m_spinBox_nBaseFctsGrad->setMaximum(270);
-        ui->m_spinBox_nBaseFctsGrad->setValue(270);
-    }
-}
+#endif // SPHARA_H

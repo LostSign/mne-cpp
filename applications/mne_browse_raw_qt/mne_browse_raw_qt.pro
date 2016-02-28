@@ -190,7 +190,11 @@ win32 {
 macx {
     # === Mac ===
     QMAKE_RPATHDIR += @executable_path/../Frameworks
-    QMAKE_RPATHDIR += @executable_path/../libs
+
+    # Copy Resource folder to app bundle
+    brrc.path = Contents/MacOS
+    brrc.files = $${DESTDIR}/MNE_Browse_Raw_Resources
+    QMAKE_BUNDLE_DATA += brrc
 
 #    isEmpty(TARGET_EXT) {
 #        TARGET_CUSTOM_EXT = .app
