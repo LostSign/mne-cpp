@@ -3,9 +3,13 @@
 
 #include <QWidget>
 
-namespace Ui {
-class TreebasedDictWindow;
-}
+//*************************************************************************************************************
+//=============================================================================================================
+// DEFINE NAMESPACE MNEMatchingPursuit
+//=============================================================================================================
+
+namespace MNEMatchingPursuit
+{
 
 class TreebasedDictWindow : public QWidget
 {
@@ -24,5 +28,6 @@ private slots:
 private:
     Ui::TreebasedDictWindow *ui;
 };
+}
 
 #endif // TREEBASEDDICTWINDOW_H

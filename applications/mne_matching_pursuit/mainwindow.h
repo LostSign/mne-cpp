@@ -108,10 +108,13 @@ using namespace DISPLIB;
 
 //=============================================================================================================
 
-namespace Ui
+//*************************************************************************************************************
+//=============================================================================================================
+// DEFINE NAMESPACE MNEMatchingPursuit
+//=============================================================================================================
+
+namespace MNEMatchingPursuit
 {
-    class MainWindow;
-}
 
 
 enum truncation_criterion
@@ -546,9 +549,8 @@ private slots:
     void on_actionBeenden_triggered();
     void on_mouse_button_release();
     void on_rb_OwnDictionary_clicked();
-    void on_extend_tab_button();
-    void on_close_tab_button(int index);
     void on_actionTFplot_triggered();
+    void on_tabWidget_currentChanged(int index);
 
 signals:
 
@@ -565,6 +567,7 @@ private:
     bool is_save_white;
     bool tbv_is_loading;
     bool auto_change;
+    bool all_select_change; //if all atoms selected, selected_atom_map doesn´t change
     bool was_partialchecked;
     bool read_fiff_changed;
     bool is_white;
@@ -584,6 +587,7 @@ private:
     QString last_save_path;
     QMap<qint32, bool> select_channel_map;
     QMap<qint32, bool> select_atoms_map;
+    QMap<qint32, bool> all_select_atoms_map;
     QList<QColor> original_colors;
     QList<QList<GaborAtom> > _adaptive_atom_list;
     QList<FixDictAtom> _fix_dict_atom_list;
@@ -844,6 +848,19 @@ private:
     static bool sort_energy_fix(const FixDictAtom atom_1, const FixDictAtom atom_2);
 
     //==========================================================================================================
+
+    /**
+    * MainWindow_atom_map_selection_changed
+    *
+    * ### MP toolbox main function ###
+    *
+    * prepares update for painting if selection of atoms changes
+    *
+    */
+    void MainWindow::atom_map_selection_changed();
+
+    //==========================================================================================================
+
 };
 
 //*************************************************************************************************************
@@ -1004,6 +1021,7 @@ signals:
     void save_progress(qint32 current_progress, qint32 finished);
 
 };
+}
 
 //*************************************************************************************************************
 

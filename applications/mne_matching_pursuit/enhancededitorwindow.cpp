@@ -60,7 +60,7 @@
 // USED NAMESPACES
 //=============================================================================================================
 
-
+using namespace MNEMatchingPursuit;
 
 //*************************************************************************************************************
 //=============================================================================================================
@@ -85,7 +85,7 @@ QStringList _names_list;
 Enhancededitorwindow::Enhancededitorwindow(QWidget *parent): QWidget(parent), ui(new Ui::Enhancededitorwindow)
 {
     this->setAccessibleName("formel");
-    ui->setupUi(this);
+    Ui->setupUi(this);
 
     QSettings settings;
     move(settings.value("pos_enhanced_editor", QPoint(200, 200)).toPoint());

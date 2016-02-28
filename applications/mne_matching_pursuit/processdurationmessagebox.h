@@ -42,15 +42,13 @@
 //=============================================================================================================
 #include <QDialog>
 
+//*************************************************************************************************************
 //=============================================================================================================
-// USED NAMESPACES
-
-namespace Ui {
-
+// DEFINE NAMESPACE MNEMatchingPursuit
 //=============================================================================================================
 
-class processdurationmessagebox;
-}
+namespace MNEMatchingPursuit
+{
 
 class processdurationmessagebox : public QDialog
 {
@@ -67,7 +65,8 @@ private slots:
     void on_chb_NoMessageBox_toggled(bool checked);
 
 private:
-    Ui::processdurationmessagebox *ui;
+    MNEMatchingPursuit::processdurationmessagebox *ui;
 };
+}
 
 #endif // PROCESSDURATIONMESSAGEBOX_H

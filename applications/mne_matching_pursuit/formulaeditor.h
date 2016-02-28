@@ -65,12 +65,17 @@
 
 #define ANZFUNKTKONST 10
 
-class AtomPaintWindow;
 
-namespace Ui
+
+//*************************************************************************************************************
+//=============================================================================================================
+// DEFINE NAMESPACE MNEMatchingPursuit
+//=============================================================================================================
+
+namespace MNEMatchingPursuit
 {
-    class Formulaeditor;
-}
+    class AtomPaintWindow;
+
 
 class Formulaeditor : public QWidget
 {
@@ -176,7 +181,7 @@ signals:
     void formula_saved();
 
 private:    
-    Ui::Formulaeditor *ui;
+    MNEMatchingPursuit::Formulaeditor *ui;
     AtomPaintWindow *callAtomPaintWindow;
 
     //========================================================================================================
@@ -226,6 +231,7 @@ public:
    void paint_signal(QList<qreal> valueList, QSize windowSize);
 
 };
+}
 
 #endif // FORMULAEDITOR_H
 
