@@ -50,6 +50,7 @@ SUBDIRS += \
     findEvoked \
     evokedGradAmp \
     cancelNoise \
+    dipoleFit \
     fiffIO \
     makeLayout\
     readBEM\
@@ -58,12 +59,6 @@ SUBDIRS += \
 
 contains(MNECPP_CONFIG, withGui) {
     SUBDIRS += \
-
-    qtHaveModule(3dcore,3drender,3dinput) {
-    message(Examples.pro - Qt3D available!)
-    SUBDIRS += \
-        disp3DTutorial \
-    }
 
     qtHaveModule(3dcore,3drender,3dinput) {
     message(examples.pro - Qt3D available)
@@ -81,5 +76,6 @@ contains(MNECPP_CONFIG, withGui) {
         stClusteredInversePwlRapMusic  \
         roiClusteredInversePwlRapMusic \
         fsSurface \
+        disp3DTutorial \
     }
 }
