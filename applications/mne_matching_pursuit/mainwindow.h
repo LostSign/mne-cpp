@@ -46,14 +46,19 @@
 //=============================================================================================================
 
 #include <mne/mne.h>
-#include <disp/plot.h>
-#include <disp/helpers/colormap.h>
+
 #include <utils/spectrogram.h>
+#include <utils/layoutloader.h>
 #include <utils/mp/atom.h>
 #include <utils/mp/adaptivemp.h>
 #include <utils/mp/fixdictmp.h>
-#include <disp/tfplot.h>
 
+#include <disp/tfplot.h>
+#include <disp/plot.h>
+#include <disp/helpers/colormap.h>
+#include <disp/helpers/tfplotscene.h>
+
+#include "ui_mainwindow.h"
 #include "editorwindow.h"
 #include "ui_editorwindow.h"
 #include "formulaeditor.h"
@@ -68,7 +73,8 @@
 #include "ui_treebaseddictwindow.h"
 #include "settingwindow.h"
 #include "ui_settingwindow.h"
-#include "ui_mainwindow.h"
+
+
 
 //*************************************************************************************************************
 //=============================================================================================================
@@ -552,6 +558,7 @@ private slots:
     void on_rb_OwnDictionary_clicked();
     void on_actionTFplot_triggered();
     void on_tabWidget_currentChanged(int index);
+    void onComboBoxLayoutChanged();
 
 signals:
 
@@ -615,6 +622,10 @@ private:
     QThread* mp_Thread;
     AdaptiveMp *adaptive_Mp;
     FixDictMp *fixDict_Mp ;
+
+    QMap<QString,QPointF>           m_layoutMap;                        /**< QMap with the loaded layout. each channel name correspond to a QPointF variable. */
+    TFPlotScene*                 m_tfPlotScene;                  /**< Pointer to the selection scene class. */
+
 
     //==========================================================================================================
     /**
@@ -861,6 +872,11 @@ private:
     void MainWindow::atom_map_selection_changed();
 
     //==========================================================================================================
+
+     void initComboBoxes();
+     bool loadLayout(QString path);
+     void initTFPlotSceneView();
+     //void updateSceneItems();
 
 };
 

@@ -948,6 +948,14 @@ QTabBar::tab:only-one {
            <attribute name="title">
             <string>TF-Overview</string>
            </attribute>
+           <layout class="QGridLayout" name="gridLayout_2">
+            <item row="0" column="0">
+             <widget class="QGraphicsView" name="gv_tfplot_overview"/>
+            </item>
+            <item row="1" column="0">
+             <widget class="QComboBox" name="cb_layouts"/>
+            </item>
+           </layout>
           </widget>
           <widget class="QWidget" name="tw_Tab2">
            <attribute name="title">

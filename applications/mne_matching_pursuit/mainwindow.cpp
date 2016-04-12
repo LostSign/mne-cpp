@@ -126,7 +126,6 @@ const QSize* psize = new QSize(10, 10);
 //=============================================================================================================
 MainWindow::MainWindow(QWidget *parent) :    QMainWindow(parent),    ui(new Ui::MainWindow)
 {
-
     ui->setupUi(this);
 
     auto_change = false;
@@ -205,6 +204,9 @@ MainWindow::MainWindow(QWidget *parent) :    QMainWindow(parent),    ui(new Ui::
     QDir dir(QDir::homePath() + "/" + "Matching-Pursuit-Toolbox");
     if(!dir.exists())dir.mkdir(".");
     fill_dict_combobox();
+
+    initTFPlotSceneView();
+    initComboBoxes();
 
     QSettings settings;
     move(settings.value("pos", QPoint(200, 200)).toPoint());
@@ -3462,3 +3464,65 @@ void MainWindow::on_tabWidget_currentChanged(int index)
         tbv_is_loading = false;
     }*/
 }
+
+//*************************************************************************************************************
+
+void MainWindow::initTFPlotSceneView()
+{
+    //Create layout scene and set to view
+    m_tfPlotScene = new TFPlotScene(ui->gv_tfplot_overview);
+    ui->gv_tfplot_overview->setScene(m_tfPlotScene);
+
+   //++ connect(m_pSelectionScene, &QGraphicsScene::selectionChanged,
+       //++         this, &SelectionManagerWindow::updateUserDefinedChannelsList);
+}
+
+void MainWindow::initComboBoxes()
+{
+    ui->cb_layouts->clear();
+    ui->cb_layouts->insertItems(0, QStringList()
+                                << "babymeg-mag-inner-layer.lout"
+                                << "babymeg-mag-outer-layer.lout"
+                                //      << "babymeg-mag-ref.lout"
+                                <<"Vectorview-grad.lout"
+                                << "Vectorview-all.lout"
+                                << "Vectorview-mag.lout"
+                                << "dukeEEG64dry.lout"
+                                //      << "CTF-275.lout"
+                                //      << "magnesWH3600.lout"
+                                );
+
+    connect(ui->cb_layouts, &QComboBox::currentTextChanged, this, &MainWindow::onComboBoxLayoutChanged);
+
+    //Initialise layout as neuromag vectorview with all channels
+    QString selectionName("babymeg-mag-inner-layer.lout");
+    loadLayout(QCoreApplication::applicationDirPath() + selectionName.prepend("/MNE_Browse_Raw_Resources/Templates/Layouts/"));
+}
+
+//*************************************************************************************************************
+
+void MainWindow::onComboBoxLayoutChanged()
+{
+    QString selectionName(ui->cb_layouts->currentText());
+    loadLayout(QCoreApplication::applicationDirPath() + selectionName.prepend("/MNE_Browse_Raw_Resources/Templates/Layouts/"));
+}
+
+//*************************************************************************************************************
+
+bool MainWindow::loadLayout(QString path)
+{
+    bool state = LayoutLoader::readMNELoutFile(path, m_layoutMap);
+
+    QStringList bad;
+    m_tfPlotScene->repaintItems(m_layoutMap, bad);
+    m_tfPlotScene->update();
+    //updateSceneItems();
+
+    //Fit to view
+    ui->gv_tfplot_overview->fitInView(m_tfPlotScene->itemsBoundingRect(), Qt::KeepAspectRatio);
+
+    return state;
+}
+
+//*************************************************************************************************************
+
