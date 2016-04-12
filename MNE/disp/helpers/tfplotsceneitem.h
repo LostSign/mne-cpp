@@ -109,6 +109,14 @@ public:
     bool        m_bIsBadChannel;            /**< Whether this item is a bad channel.*/
 };
 
+struct TFPlotItemStruct
+{
+     private:
+         QString channelName;
+         QPointF coordinates;
+         QImage tfPlotImage;
+ };
+
 } // NAMESPACE DISPLIB
 
 #endif // TFPLOTSCENEITEM_H

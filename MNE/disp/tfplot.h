@@ -126,6 +126,8 @@ public:
     */
     TFplot(MatrixXd tf_matrix, qreal sample_rate, ColorMaps cmap);
 
+    //=========================================================================================================
+    QImage * creatTFPlotImage(MatrixXd tf_matrix, ColorMaps cmap);
 
 private:
 

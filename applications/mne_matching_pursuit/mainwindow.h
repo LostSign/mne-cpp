@@ -627,6 +627,7 @@ private:
     TFPlotScene*                 m_tfPlotScene;                  /**< Pointer to the selection scene class. */
 
 
+
     //==========================================================================================================
     /**
     * MainWindow_fill_dict_combobox

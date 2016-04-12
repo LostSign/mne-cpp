@@ -286,6 +286,52 @@ void TFplot::calc_plot(MatrixXd tf_matrix, qreal sample_rate, ColorMaps cmap, qr
 
 }
 
+QImage * TFplot::creatTFPlotImage(MatrixXd tf_matrix, ColorMaps cmap)
+{
+    //normalisation of the tf-matrix
+    qreal norm1 = tf_matrix.maxCoeff();
+    qreal mnorm = tf_matrix.minCoeff();
+    if(abs(mnorm) > norm1) norm1 = mnorm;
+    tf_matrix /= norm1;
+
+    //setup image
+    QImage * image_to_tf_plot = new QImage(tf_matrix.cols(), tf_matrix.rows(), QImage::Format_RGB32);
+
+    //setup pixelcolors in image
+    QColor color;
+    for ( qint32 y = 0; y < tf_matrix.rows(); y++ )
+        for ( qint32 x = 0; x < tf_matrix.cols(); x++ )
+        {
+            switch  (cmap)
+            {
+                case Jet:
+                    color.setRgb(ColorMap::valueToJet(abs(tf_matrix(y, x))));
+                    break;
+                case Hot:
+                    color.setRgb(ColorMap::valueToHot(abs(tf_matrix(y, x))));
+                    break;
+                case HotNeg1:
+                    color.setRgb(ColorMap::valueToHotNegative1(abs(tf_matrix(y, x))));
+                    break;
+                case HotNeg2:
+                    color.setRgb(ColorMap::valueToHotNegative2(abs(tf_matrix(y, x))));
+                    break;
+                case Bone:
+                    color.setRgb(ColorMap::valueToBone(abs(tf_matrix(y, x))));
+                    break;
+                case RedBlue:
+                    color.setRgb(ColorMap::valueToRedBlue(abs(tf_matrix(y, x))));
+                    break;
+            }
+            image_to_tf_plot->setPixel(x, tf_matrix.rows() - 1 -  y,  color.rgb());
+        }
+
+    *image_to_tf_plot = image_to_tf_plot->scaled(tf_matrix.cols(), tf_matrix.cols()/2, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    *image_to_tf_plot = image_to_tf_plot->scaledToWidth(/*0.9 **/ 1026, Qt::SmoothTransformation);
+
+   return image_to_tf_plot;
+}
+
 void TFplot::resizeEvent(QResizeEvent *event)
 {
     Q_UNUSED(event);   
