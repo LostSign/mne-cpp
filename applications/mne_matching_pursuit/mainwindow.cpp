@@ -3428,10 +3428,78 @@ void MainWindow::on_actionTFplot_triggered()
 
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
-    Q_UNUSED(index);
-    if(tbv_is_loading) return;
-    // update ui
-    atom_map_selection_changed();
+    if(index == 2)
+    {
+        if(tbv_is_loading) return;
+        // update ui
+        atom_map_selection_changed();
+    }
+    if(index == 1)
+    {
+       if(_fix_dict_atom_list.isEmpty() &&  _adaptive_atom_list.isEmpty())
+           return;
+
+       if(!_fix_dict_atom_list.isEmpty() )
+       {}
+       else if(!_adaptive_atom_list.isEmpty())
+       {
+           qint32 k = 0;
+           qint32 l =0;
+           QMapIterator<qint32, bool > j(select_channel_map);
+           while (j.hasNext())
+           {
+               j.next();
+               if(j.value())
+               {
+                  MatrixXd tf_sum;
+                  QString cur_name = pick_info.ch_names[k];
+                  QPointF cur_coordinate = m_layoutMap[cur_name];
+                  QList<GaborAtom> cur_iteration_list = _adaptive_atom_list.last().[l];
+                  for(qint32 j = 0; j < cur_iteration_list.length(); j++) //foreach atom
+                  {
+                      GaborAtom atom  = cur_iteration_list.at(j);
+                      MatrixXd tf_matrix = atom.make_tf(atom.sample_count, atom.scale, atom.translation, atom.modulation);
+
+                      tf_matrix *= atom.max_scalar_list.at(i)*atom.max_scalar_list.at(i);
+                      tf_sum += tf_matrix;
+                  }
+                  TFplot *tfplot = new TFplot(tf_sum, _sample_rate, 0, 600, Jet);
+
+                  ui->tabWidget->addTab(tfplot, cur_name);
+
+                  tfplot->resize(ui->tabWidget->size());
+              }
+
+
+               }
+
+               k++;
+                       TFPlotItemStruct tfPlotItemStruct;
+                       tfPlotItemStruct.channelName = i.key();
+                       tfPlotItemStruct.coordinates = i.value();
+
+
+                   }
+                   QMapIterator<QString,QPointF > i(m_layoutMap);
+                   while (i.hasNext()) {
+                       i.next();
+
+
+                       TFPlotItemStruct tfPlotItemStruct;
+                       tfPlotItemStruct.channelName = i.key();
+                       tfPlotItemStruct.coordinates = i.value();
+
+                       tfPlotItemStruct.tfPlotImage =
+                   }
+
+           if(!pick_info.isEmpty())
+               chn_names = pick_info.ch_names;
+
+
+       }
+    }
+
+
     /*
     if(index == 0)
     {
@@ -3473,9 +3541,10 @@ void MainWindow::initTFPlotSceneView()
     m_tfPlotScene = new TFPlotScene(ui->gv_tfplot_overview);
     ui->gv_tfplot_overview->setScene(m_tfPlotScene);
 
-   //++ connect(m_pSelectionScene, &QGraphicsScene::selectionChanged,
-       //++         this, &SelectionManagerWindow::updateUserDefinedChannelsList);
+   //++ connect(m_pSelectionScene, &QGraphicsScene::selectionChanged, this, &SelectionManagerWindow::updateUserDefinedChannelsList);
 }
+
+//*************************************************************************************************************
 
 void MainWindow::initComboBoxes()
 {
@@ -3513,13 +3582,20 @@ bool MainWindow::loadLayout(QString path)
 {
     bool state = LayoutLoader::readMNELoutFile(path, m_layoutMap);
 
+    List<TFPlotItemStruct> tfPlotItemStructList;
+
+
+
     QStringList bad;
     m_tfPlotScene->repaintItems(m_layoutMap, bad);
-    m_tfPlotScene->update();
-    //updateSceneItems();
+    m_tfPlotScene->update();   
+
+
 
     //Fit to view
     ui->gv_tfplot_overview->fitInView(m_tfPlotScene->itemsBoundingRect(), Qt::KeepAspectRatio);
+
+
 
     return state;
 }
