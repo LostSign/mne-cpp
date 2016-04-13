@@ -86,7 +86,7 @@ public:
     /**
     * Constructs a TFPlotSceneItem.
     */
-    TFPlotSceneItem(QString channelName, int channelNumber, QPointF channelPosition, int channelKind, int channelUnit, QColor channelColor = Qt::blue, bool bIsBadChannel = false);
+    TFPlotSceneItem(QString channelName, int channelNumber, QPointF channelPosition, QImage *tfImage, int channelKind, int channelUnit, QColor channelColor = Qt::blue, bool bIsBadChannel = false);
     //=========================================================================================================
     /**
     * Returns the bounding rect of the electrode item. This rect describes the area which the item uses to plot in.
@@ -107,14 +107,15 @@ public:
     QColor      m_cChannelColor;            /**< The current channel color.*/
     bool        m_bHighlightItem;           /**< Whether this item is to be highlighted.*/
     bool        m_bIsBadChannel;            /**< Whether this item is a bad channel.*/
+    QImage      *m_tfImage;
 };
 
 struct TFPlotItemStruct
 {
-     private:
+     public:
          QString channelName;
          QPointF coordinates;
-         QImage tfPlotImage;
+         QImage *tfPlotImage;
  };
 
 } // NAMESPACE DISPLIB

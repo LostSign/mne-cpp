@@ -63,10 +63,35 @@ TFPlotScene::TFPlotScene(QGraphicsView* view, QObject* parent)
 
 //*************************************************************************************************************
 
-void TFPlotScene::repaintItems(const QMap<QString,QPointF> &layoutMap, QStringList badChannels)
+void TFPlotScene::repaintItems(QList<TFPlotItemStruct> tfPlotStructList, QStringList badChannels)
 {
     this->clear();
 
+    for(qint32 i = 0; i < tfPlotStructList.length(); i++)
+    {
+        TFPlotSceneItem* TFPlotSceneItemTemp;
+        if(tfPlotStructList.at(i).channelName.contains("EEG"))
+            TFPlotSceneItemTemp = new TFPlotSceneItem(tfPlotStructList.at(i).channelName,
+                                                      0,
+                                                      tfPlotStructList.at(i).coordinates,
+                                                      tfPlotStructList.at(i).tfPlotImage,
+                                                      FIFFV_EEG_CH,
+                                                      FIFF_UNIT_T_M,
+                                                      Qt::blue,
+                                                      badChannels.contains(tfPlotStructList.at(i).channelName));
+        else
+            TFPlotSceneItemTemp = new TFPlotSceneItem(tfPlotStructList.at(i).channelName,
+                                                      0,
+                                                      tfPlotStructList.at(i).coordinates,
+                                                      tfPlotStructList.at(i).tfPlotImage,
+                                                      FIFFV_MEG_CH,
+                                                      FIFF_UNIT_T_M,
+                                                      Qt::blue,
+                                                      badChannels.contains(tfPlotStructList.at(i).channelName));
+        this->addItem(TFPlotSceneItemTemp);
+
+    }
+    /*
     QMapIterator<QString,QPointF > i(layoutMap);
     while (i.hasNext()) {
         i.next();
@@ -88,7 +113,5 @@ void TFPlotScene::repaintItems(const QMap<QString,QPointF> &layoutMap, QStringLi
                                                       FIFF_UNIT_T_M,
                                                       Qt::blue,
                                                       badChannels.contains(i.key()));
-
-        this->addItem(TFPlotSceneItemTemp);
-    }
+    }*/
 }

@@ -84,7 +84,7 @@ TFplot::TFplot(MatrixXd tf_matrix, qreal sample_rate, qreal lower_frq, qreal upp
 //-----------------------------------------------------------------------------------------------------------------
 
 TFplot::TFplot(MatrixXd tf_matrix, qreal sample_rate, ColorMaps cmap = Jet)
-{   
+{
     calc_plot(tf_matrix, sample_rate, cmap, 0, 0);
 }
 
@@ -334,7 +334,7 @@ QImage * TFplot::creatTFPlotImage(MatrixXd tf_matrix, ColorMaps cmap)
 
 void TFplot::resizeEvent(QResizeEvent *event)
 {
-    Q_UNUSED(event);   
+    Q_UNUSED(event);
 
     QWidget *widget = this->layout()->itemAt(0)-> widget();
     if (widget != NULL )

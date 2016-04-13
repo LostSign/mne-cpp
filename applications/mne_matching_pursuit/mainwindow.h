@@ -625,6 +625,7 @@ private:
 
     QMap<QString,QPointF>           m_layoutMap;                        /**< QMap with the loaded layout. each channel name correspond to a QPointF variable. */
     TFPlotScene*                 m_tfPlotScene;                  /**< Pointer to the selection scene class. */
+    QList<TFPlotItemStruct> m_tfPlotItemStructList;
 
 
 

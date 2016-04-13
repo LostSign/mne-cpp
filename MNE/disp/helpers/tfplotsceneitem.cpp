@@ -53,10 +53,11 @@ using namespace std;
 // DEFINE MEMBER METHODS
 //=============================================================================================================
 
-TFPlotSceneItem::TFPlotSceneItem(QString channelName, int channelNumber, QPointF channelPosition, int channelKind, int channelUnit, QColor channelColor, bool bIsBadChannel)
+TFPlotSceneItem::TFPlotSceneItem(QString channelName, int channelNumber, QPointF channelPosition, QImage *tfImage, int channelKind, int channelUnit, QColor channelColor, bool bIsBadChannel)
 : m_sChannelName(channelName)
 , m_iChannelNumber(channelNumber)
 , m_qpChannelPosition(channelPosition)
+, m_tfImage(tfImage)
 , m_cChannelColor(channelColor)
 , m_bHighlightItem(false)
 , m_iChannelKind(channelKind)
@@ -84,30 +85,46 @@ void TFPlotSceneItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *o
 
     this->setPos(10*m_qpChannelPosition.x(), -10*m_qpChannelPosition.y());
 
-    // Plot shadow
-    painter->setPen(Qt::NoPen);
-    painter->setBrush(Qt::darkGray);
-    painter->drawEllipse(-12, -12, 30, 30);
 
-    //Plot red if bad
-    if(m_bIsBadChannel) {
-        painter->setBrush(Qt::red);
-        painter->drawEllipse(-15, -15, 30, 30);
-    } else {
-        painter->setBrush(m_cChannelColor);
-        painter->drawEllipse(-15, -15, 30, 30);
+
+    if(m_tfImage->isNull())
+    {
+        // Plot shadow
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(Qt::darkGray);
+        painter->drawEllipse(-12, -12, 30, 30);
+        //Plot red if bad
+        if(m_bIsBadChannel) {
+            painter->setBrush(Qt::red);
+            painter->drawEllipse(-15, -15, 30, 30);
+        } else {
+            painter->setBrush(m_cChannelColor);
+            painter->drawEllipse(-15, -15, 30, 30);
+        }
+
+        //Plot selected item
+        if(this->isSelected()){
+            //painter->setPen(QPen(QColor(255,84,22), 5));
+            painter->setPen(QPen(Qt::red, 5));
+            painter->drawEllipse(-15, -15, 30, 30);
+        }
+
+        // Plot electrode name
+        painter->setPen(QPen(Qt::black, 1));
+        QStaticText staticElectrodeName = QStaticText(m_sChannelName);
+        QSizeF sizeText = staticElectrodeName.size();
+        painter->drawStaticText(-15+((30-sizeText.width())/2), -32, staticElectrodeName);
+    }
+    else
+    {
+        painter->drawImage(QRectF(-30, -15, 60, 30), *m_tfImage);
+        // Plot electrode name
+        painter->setPen(QPen(Qt::black, 1));
+        QStaticText staticElectrodeName = QStaticText(m_sChannelName);
+        QSizeF sizeText = staticElectrodeName.size();
+        painter->drawStaticText(-30+((60-sizeText.width())/2), -32, staticElectrodeName);
     }
 
-    //Plot selected item
-    if(this->isSelected()){
-        //painter->setPen(QPen(QColor(255,84,22), 5));
-        painter->setPen(QPen(Qt::red, 5));
-        painter->drawEllipse(-15, -15, 30, 30);
-    }
 
-    // Plot electrode name
-    painter->setPen(QPen(Qt::black, 1));
-    QStaticText staticElectrodeName = QStaticText(m_sChannelName);
-    QSizeF sizeText = staticElectrodeName.size();
-    painter->drawStaticText(-15+((30-sizeText.width())/2), -32, staticElectrodeName);
+
 }

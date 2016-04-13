@@ -3440,64 +3440,70 @@ void MainWindow::on_tabWidget_currentChanged(int index)
            return;
 
        if(!_fix_dict_atom_list.isEmpty() )
-       {}
+       {
+
+       }
        else if(!_adaptive_atom_list.isEmpty())
        {
            qint32 k = 0;
            qint32 l =0;
-           QMapIterator<qint32, bool > j(select_channel_map);
+           QString selectionName(ui->cb_layouts->currentText());
+           QString path = QCoreApplication::applicationDirPath() + selectionName.prepend("/MNE_Browse_Raw_Resources/Templates/Layouts/");
+           LayoutLoader::readMNELoutFile(path, m_layoutMap);
+
+           QMapIterator<qint32, bool> j(select_channel_map);
            while (j.hasNext())
            {
                j.next();
+               QPointF cur_coordinate;
+               QImage *tf_image = new QImage("test");
+               QString cur_name = pick_info.ch_names[k];
+
+               // ToDo do better
+               if(cur_name.contains("MEG 0"))
+                   cur_name.remove(4,1);
+               if(m_layoutMap.contains(cur_name))
+                   cur_coordinate = m_layoutMap[cur_name];
+               //else
+               //    cur_coordinate = m_layoutMap.toStdMap().at(k);
+
                if(j.value())
                {
-                  MatrixXd tf_sum;
-                  QString cur_name = pick_info.ch_names[k];
-                  QPointF cur_coordinate = m_layoutMap[cur_name];
-                  QList<GaborAtom> cur_iteration_list = _adaptive_atom_list.last().[l];
-                  for(qint32 j = 0; j < cur_iteration_list.length(); j++) //foreach atom
-                  {
-                      GaborAtom atom  = cur_iteration_list.at(j);
-                      MatrixXd tf_matrix = atom.make_tf(atom.sample_count, atom.scale, atom.translation, atom.modulation);
+                   MatrixXd tf_sum = MatrixXd::Zero(floor(_adaptive_atom_list.first().first().sample_count/2), _adaptive_atom_list.first().first().sample_count);
 
-                      tf_matrix *= atom.max_scalar_list.at(i)*atom.max_scalar_list.at(i);
-                      tf_sum += tf_matrix;
-                  }
-                  TFplot *tfplot = new TFplot(tf_sum, _sample_rate, 0, 600, Jet);
+                   if(cur_name.contains("MEG"))
+                       cur_name.remove(4,1);
+                   QPointF cur_coordinate = m_layoutMap[cur_name];
 
-                  ui->tabWidget->addTab(tfplot, cur_name);
+                   for(qint32 i = 0; i < _adaptive_atom_list.length(); i++) //foreach atom
+                   {
+                       GaborAtom atom  = _adaptive_atom_list.at(i).first();
+                       MatrixXd tf_matrix = atom.make_tf(atom.sample_count, atom.scale, atom.translation, atom.modulation);
 
-                  tfplot->resize(ui->tabWidget->size());
-              }
+                       tf_matrix *= atom.max_scalar_list.at(l)*atom.max_scalar_list.at(l);
+                       tf_sum += tf_matrix;
+                   }
+
+                   TFplot *tf_plot;
+                   tf_image = tf_plot->creatTFPlotImage(tf_sum, Jet);
 
 
+                   l++;
                }
-
+               TFPlotItemStruct tfPlotItemStruct;
+               tfPlotItemStruct.channelName = cur_name;
+               tfPlotItemStruct.coordinates = cur_coordinate;
+               tfPlotItemStruct.tfPlotImage = tf_image;
+               m_tfPlotItemStructList.append(tfPlotItemStruct);
                k++;
-                       TFPlotItemStruct tfPlotItemStruct;
-                       tfPlotItemStruct.channelName = i.key();
-                       tfPlotItemStruct.coordinates = i.value();
+           }
 
-
-                   }
-                   QMapIterator<QString,QPointF > i(m_layoutMap);
-                   while (i.hasNext()) {
-                       i.next();
-
-
-                       TFPlotItemStruct tfPlotItemStruct;
-                       tfPlotItemStruct.channelName = i.key();
-                       tfPlotItemStruct.coordinates = i.value();
-
-                       tfPlotItemStruct.tfPlotImage =
-                   }
-
-           if(!pick_info.isEmpty())
-               chn_names = pick_info.ch_names;
-
-
+           QStringList(bad);
+           m_tfPlotScene->repaintItems(m_tfPlotItemStructList, bad);
+           m_tfPlotScene->update();
        }
     }
+
 
 
     /*
@@ -3582,21 +3588,12 @@ bool MainWindow::loadLayout(QString path)
 {
     bool state = LayoutLoader::readMNELoutFile(path, m_layoutMap);
 
-    List<TFPlotItemStruct> tfPlotItemStructList;
-
-
-
     QStringList bad;
-    m_tfPlotScene->repaintItems(m_layoutMap, bad);
-    m_tfPlotScene->update();   
-
-
+    m_tfPlotScene->repaintItems(m_tfPlotItemStructList, bad);
+    m_tfPlotScene->update();
 
     //Fit to view
     ui->gv_tfplot_overview->fitInView(m_tfPlotScene->itemsBoundingRect(), Qt::KeepAspectRatio);
-
-
-
     return state;
 }
 

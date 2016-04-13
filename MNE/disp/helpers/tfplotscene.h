@@ -94,7 +94,7 @@ public:
     * @param [in] layoutMap layout data map.
     * @param [in] bad channel list.
     */
-    void repaintItems(const QMap<QString, QPointF> &layoutMap, QStringList badChannels);
+    void repaintItems(QList<TFPlotItemStruct> tfPlotStructList, QStringList badChannels);
 
     int         m_iChannelTypeMode;
 };
