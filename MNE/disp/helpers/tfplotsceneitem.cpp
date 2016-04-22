@@ -124,7 +124,4 @@ void TFPlotSceneItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *o
         QSizeF sizeText = staticElectrodeName.size();
         painter->drawStaticText(-30+((60-sizeText.width())/2), -32, staticElectrodeName);
     }
-
-
-
 }

@@ -3450,24 +3450,25 @@ void MainWindow::on_tabWidget_currentChanged(int index)
            QString selectionName(ui->cb_layouts->currentText());
            QString path = QCoreApplication::applicationDirPath() + selectionName.prepend("/MNE_Browse_Raw_Resources/Templates/Layouts/");
            LayoutLoader::readMNELoutFile(path, m_layoutMap);
-
-           QMapIterator<qint32, bool> j(select_channel_map);
-           while (j.hasNext())
+           m_mappedLayoutChNames = pick_info.ch_names;
+           mapLayoutToChannels();
+           QMapIterator<qint32, bool> channel(select_channel_map);
+           while (channel.hasNext())
            {
-               j.next();
+               channel.next();
                QPointF cur_coordinate;
                QImage *tf_image = new QImage("test");
-               QString cur_name = pick_info.ch_names[k];
+               QString cur_name = m_mappedLayoutChNames.at(k);
 
                // ToDo do better
-               if(cur_name.contains("MEG 0"))
+               /*if(cur_name.contains("MEG 0"))
                    cur_name.remove(4,1);
                if(m_layoutMap.contains(cur_name))
                    cur_coordinate = m_layoutMap[cur_name];
                //else
-               //    cur_coordinate = m_layoutMap.toStdMap().at(k);
+               //    cur_coordinate = m_layoutMap.toStdMap().at(k);*/
 
-               if(j.value())
+               if(channel.value())
                {
                    MatrixXd tf_sum = MatrixXd::Zero(floor(_adaptive_atom_list.first().first().sample_count/2), _adaptive_atom_list.first().first().sample_count);
 
@@ -3599,3 +3600,43 @@ bool MainWindow::loadLayout(QString path)
 
 //*************************************************************************************************************
 
+void MainWindow::mapLayoutToChannels()
+{
+    //TODO: Move this to layout loader in MNE-CPP Utils?
+    //Map channels to layout
+    QList<FiffChInfo> channelList = pick_info.chs;
+    for(int i = 0; i<channelList.size(); i++) {
+        //Get current channel information
+        FiffChInfo chInfo = channelList.at(i);
+        QString chName = chInfo.ch_name;
+        QRegExp regExpRemove;
+        bool flagOk = false;
+
+        switch(chInfo.kind) {
+            case FIFFV_MEG_CH:
+                //Scan for MEG string and other characters
+                regExpRemove = QRegExp("(MEG|-|_|/|\| )");
+                chName.remove(regExpRemove);
+
+                //After cleaning the string try to convert the residual to an int number
+                flagOk = false;
+                m_mappedLayoutChNames.replace(i, QString("%1 %2").arg("MEG").arg(chName));
+
+                break;
+
+            case FIFFV_EEG_CH: {
+                //Scan for EEG string and other characters
+                regExpRemove = QRegExp("(EEG|-|_|/|\| )");
+                chName.remove(regExpRemove);
+
+                //After cleaning the string try to convert the residual to an int number
+                flagOk = false;
+                m_mappedLayoutChNames.replace(i, QString("%1 %2").arg("EEG").arg(chName));
+
+                break;
+            }
+        }
+    } //end fiff chs
+
+    //emit channelsMappedToLayout(m_mappedLayoutChNames);
+}
