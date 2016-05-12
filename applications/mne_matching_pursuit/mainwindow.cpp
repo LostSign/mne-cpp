@@ -3449,32 +3449,22 @@ void MainWindow::on_tabWidget_currentChanged(int index)
            qint32 l =0;
            QString selectionName(ui->cb_layouts->currentText());
            QString path = QCoreApplication::applicationDirPath() + selectionName.prepend("/MNE_Browse_Raw_Resources/Templates/Layouts/");
+          
            LayoutLoader::readMNELoutFile(path, m_layoutMap);
-           m_mappedLayoutChNames = pick_info.ch_names;
-           mapLayoutToChannels();
+
            QMapIterator<qint32, bool> channel(select_channel_map);
            while (channel.hasNext())
            {
                channel.next();
                QPointF cur_coordinate;
                QImage *tf_image = new QImage("test");
-               QString cur_name = m_mappedLayoutChNames.at(k);
+               QString cur_name =pick_info.ch_names.at(k);
 
-               // ToDo do better
-               /*if(cur_name.contains("MEG 0"))
-                   cur_name.remove(4,1);
-               if(m_layoutMap.contains(cur_name))
-                   cur_coordinate = m_layoutMap[cur_name];
-               //else
-               //    cur_coordinate = m_layoutMap.toStdMap().at(k);*/
+               cur_coordinate = m_layoutMap[cur_name];
 
                if(channel.value())
                {
                    MatrixXd tf_sum = MatrixXd::Zero(floor(_adaptive_atom_list.first().first().sample_count/2), _adaptive_atom_list.first().first().sample_count);
-
-                   if(cur_name.contains("MEG"))
-                       cur_name.remove(4,1);
-                   QPointF cur_coordinate = m_layoutMap[cur_name];
 
                    for(qint32 i = 0; i < _adaptive_atom_list.length(); i++) //foreach atom
                    {
@@ -3487,7 +3477,6 @@ void MainWindow::on_tabWidget_currentChanged(int index)
 
                    TFplot *tf_plot;
                    tf_image = tf_plot->creatTFPlotImage(tf_sum, Jet);
-
 
                    l++;
                }
@@ -3504,40 +3493,6 @@ void MainWindow::on_tabWidget_currentChanged(int index)
            m_tfPlotScene->update();
        }
     }
-
-
-
-    /*
-    if(index == 0)
-    {
-        callAtomSumWindow->update();
-        callResidumWindow->update();
-    }
-    else if(index == 2)
-    {
-        MatrixXd tf_sum = MatrixXd::Zero(floor(_adaptive_atom_list.first().first().sample_count/2), _adaptive_atom_list.first().first().sample_count);
-
-        for(qint32 i = 0; i < _adaptive_atom_list.first().length(); i++)//foreach channel
-        {
-            for(qint32 j = 0; j < _adaptive_atom_list.length(); j++) //foreach atom
-            {
-                GaborAtom atom  = _adaptive_atom_list.at(j).at(i);
-                MatrixXd tf_matrix = atom.make_tf(atom.sample_count, atom.scale, atom.translation, atom.modulation);
-
-                tf_matrix *= atom.max_scalar_list.at(i)*atom.max_scalar_list.at(i);
-                tf_sum += tf_matrix;
-            }
-        }
-        tbv_is_loading = true;
-        TFplot *tfplot = new TFplot(tf_sum, _sample_rate, 0, 600, Jet);
-        if(ui->tabWidget->count() >= 3)
-            ui->tabWidget->removeTab(2);
-
-        ui->tabWidget->addTab(tfplot, "TF-Plot");
-        ui->tabWidget->setCurrentIndex(2);
-        tfplot->resize(ui->tabWidget->size());
-        tbv_is_loading = false;
-    }*/
 }
 
 //*************************************************************************************************************
@@ -3571,8 +3526,9 @@ void MainWindow::initComboBoxes()
     connect(ui->cb_layouts, &QComboBox::currentTextChanged, this, &MainWindow::onComboBoxLayoutChanged);
 
     //Initialise layout as neuromag vectorview with all channels
-    QString selectionName("babymeg-mag-inner-layer.lout");
+    QString selectionName("Vectorview-all.lout");
     loadLayout(QCoreApplication::applicationDirPath() + selectionName.prepend("/MNE_Browse_Raw_Resources/Templates/Layouts/"));
+    ui->cb_layouts->setCurrentText(selectionName);
 }
 
 //*************************************************************************************************************
@@ -3600,43 +3556,3 @@ bool MainWindow::loadLayout(QString path)
 
 //*************************************************************************************************************
 
-void MainWindow::mapLayoutToChannels()
-{
-    //TODO: Move this to layout loader in MNE-CPP Utils?
-    //Map channels to layout
-    QList<FiffChInfo> channelList = pick_info.chs;
-    for(int i = 0; i<channelList.size(); i++) {
-        //Get current channel information
-        FiffChInfo chInfo = channelList.at(i);
-        QString chName = chInfo.ch_name;
-        QRegExp regExpRemove;
-        bool flagOk = false;
-
-        switch(chInfo.kind) {
-            case FIFFV_MEG_CH:
-                //Scan for MEG string and other characters
-                regExpRemove = QRegExp("(MEG|-|_|/|\| )");
-                chName.remove(regExpRemove);
-
-                //After cleaning the string try to convert the residual to an int number
-                flagOk = false;
-                m_mappedLayoutChNames.replace(i, QString("%1 %2").arg("MEG").arg(chName));
-
-                break;
-
-            case FIFFV_EEG_CH: {
-                //Scan for EEG string and other characters
-                regExpRemove = QRegExp("(EEG|-|_|/|\| )");
-                chName.remove(regExpRemove);
-
-                //After cleaning the string try to convert the residual to an int number
-                flagOk = false;
-                m_mappedLayoutChNames.replace(i, QString("%1 %2").arg("EEG").arg(chName));
-
-                break;
-            }
-        }
-    } //end fiff chs
-
-    //emit channelsMappedToLayout(m_mappedLayoutChNames);
-}

@@ -85,8 +85,6 @@ void TFPlotSceneItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *o
 
     this->setPos(10*m_qpChannelPosition.x(), -10*m_qpChannelPosition.y());
 
-
-
     if(m_tfImage->isNull())
     {
         // Plot shadow
@@ -97,7 +95,8 @@ void TFPlotSceneItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *o
         if(m_bIsBadChannel) {
             painter->setBrush(Qt::red);
             painter->drawEllipse(-15, -15, 30, 30);
-        } else {
+        }
+        else {
             painter->setBrush(m_cChannelColor);
             painter->drawEllipse(-15, -15, 30, 30);
         }

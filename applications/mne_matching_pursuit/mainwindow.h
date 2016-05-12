@@ -882,11 +882,6 @@ private:
 
     //=========================================================================================================
 
-    /**
-     * Maps the currently loaded channels to the loaded layout file
-     *
-     */
-    void mapLayoutToChannels();
 
 };
 

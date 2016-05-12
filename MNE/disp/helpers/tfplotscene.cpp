@@ -91,27 +91,4 @@ void TFPlotScene::repaintItems(QList<TFPlotItemStruct> tfPlotStructList, QString
         this->addItem(TFPlotSceneItemTemp);
 
     }
-    /*
-    QMapIterator<QString,QPointF > i(layoutMap);
-    while (i.hasNext()) {
-        i.next();
-        TFPlotSceneItem* TFPlotSceneItemTemp;
-
-        if(i.key().contains("EEG"))
-            TFPlotSceneItemTemp = new TFPlotSceneItem(i.key(),
-                                                      0,
-                                                      i.value(),
-                                                      FIFFV_EEG_CH,
-                                                      FIFF_UNIT_T_M,
-                                                      Qt::blue,
-                                                      badChannels.contains(i.key()));
-        else
-            TFPlotSceneItemTemp = new TFPlotSceneItem(i.key(),
-                                                      0,
-                                                      i.value(),
-                                                      FIFFV_MEG_CH,
-                                                      FIFF_UNIT_T_M,
-                                                      Qt::blue,
-                                                      badChannels.contains(i.key()));
-    }*/
 }
