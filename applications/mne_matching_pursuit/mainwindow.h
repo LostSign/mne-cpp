@@ -623,9 +623,10 @@ private:
     AdaptiveMp *adaptive_Mp;
     FixDictMp *fixDict_Mp ;
 
-    QMap<QString,QPointF>           m_layoutMap;                        /**< QMap with the loaded layout. each channel name correspond to a QPointF variable. */
-    TFPlotScene*                 m_tfPlotScene;                  /**< Pointer to the selection scene class. */
+    QMap<QString,QPointF>           m_layoutMap;                         /**< QMap with the loaded layout. each channel name correspond to a QPointF variable. */
+    TFPlotScene*                 m_tfPlotScene;                          /**< Pointer to the selection scene class. */
     QList<TFPlotItemStruct> m_tfPlotItemStructList;
+    QStringList             m_mappedLayoutChNames;                       /**< list of the mapped layout channel names. */
 
 
 
@@ -875,10 +876,12 @@ private:
 
     //==========================================================================================================
 
-     void initComboBoxes();
-     bool loadLayout(QString path);
-     void initTFPlotSceneView();
-     //void updateSceneItems();
+    void initComboBoxes();
+    bool loadLayout(QString path);
+    void initTFPlotSceneView();
+
+    //=========================================================================================================
+
 
 };
 
