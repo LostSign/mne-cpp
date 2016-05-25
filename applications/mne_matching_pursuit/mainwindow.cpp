@@ -3448,8 +3448,7 @@ void MainWindow::on_tabWidget_currentChanged(int index)
            qint32 k = 0;
            qint32 l =0;
            QString selectionName(ui->cb_layouts->currentText());
-           QString path = QCoreApplication::applicationDirPath() + selectionName.prepend("/MNE_Browse_Raw_Resources/Templates/Layouts/");
-          
+           QString path = QCoreApplication::applicationDirPath() + selectionName.prepend("/Resources/2DLayouts/");
            LayoutLoader::readMNELoutFile(path, m_layoutMap);
 
            QMapIterator<qint32, bool> channel(select_channel_map);
@@ -3476,7 +3475,7 @@ void MainWindow::on_tabWidget_currentChanged(int index)
                    }
 
                    TFplot *tf_plot;
-                   tf_image = tf_plot->creatTFPlotImage(tf_sum, Jet);
+                   tf_image = tf_plot->creatTFPlotImage(tf_sum, QSize(60,30), Jet);
 
                    l++;
                }
@@ -3515,7 +3514,7 @@ void MainWindow::initComboBoxes()
                                 << "babymeg-mag-inner-layer.lout"
                                 << "babymeg-mag-outer-layer.lout"
                                 //      << "babymeg-mag-ref.lout"
-                                <<"Vectorview-grad.lout"
+                                << "Vectorview-grad.lout"
                                 << "Vectorview-all.lout"
                                 << "Vectorview-mag.lout"
                                 << "dukeEEG64dry.lout"
@@ -3525,9 +3524,11 @@ void MainWindow::initComboBoxes()
 
     connect(ui->cb_layouts, &QComboBox::currentTextChanged, this, &MainWindow::onComboBoxLayoutChanged);
 
-    //Initialise layout as neuromag vectorview with all channels
+    //Initialise layout as Vectorview with all channels
     QString selectionName("Vectorview-all.lout");
-    loadLayout(QCoreApplication::applicationDirPath() + selectionName.prepend("/MNE_Browse_Raw_Resources/Templates/Layouts/"));
+    //loadLayout(QCoreApplication::applicationDirPath() + selectionName.prepend("/Resources/2DLayouts/"));
+
+    ui->cb_layouts->setCurrentIndex(ui->cb_layouts->findData(selectionName, Qt::DisplayRole));
     ui->cb_layouts->setCurrentText(selectionName);
 }
 
@@ -3536,13 +3537,13 @@ void MainWindow::initComboBoxes()
 void MainWindow::onComboBoxLayoutChanged()
 {
     QString selectionName(ui->cb_layouts->currentText());
-    loadLayout(QCoreApplication::applicationDirPath() + selectionName.prepend("/MNE_Browse_Raw_Resources/Templates/Layouts/"));
+    loadLayout(QCoreApplication::applicationDirPath() + selectionName.prepend("/Resources/2DLayouts/"));
 }
 
 //*************************************************************************************************************
 
 bool MainWindow::loadLayout(QString path)
-{
+{    
     bool state = LayoutLoader::readMNELoutFile(path, m_layoutMap);
 
     QStringList bad;

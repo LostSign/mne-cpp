@@ -92,3 +92,17 @@ void TFPlotScene::repaintItems(QList<TFPlotItemStruct> tfPlotStructList, QString
 
     }
 }
+
+//*************************************************************************************************************
+
+void TFPlotScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* mouseEvent)
+{
+    this->selectedItems();
+
+    if(mouseEvent->button() == Qt::LeftButton)
+        m_qvView->fitInView(this->itemsBoundingRect(), Qt::KeepAspectRatio);
+
+
+
+    QGraphicsScene::mouseDoubleClickEvent(mouseEvent);
+}

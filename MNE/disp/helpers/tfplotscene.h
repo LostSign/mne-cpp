@@ -96,6 +96,15 @@ public:
     */
     void repaintItems(QList<TFPlotItemStruct> tfPlotStructList, QStringList badChannels);
 
+protected:
+     QPointF                         m_mousePressPosition;           /**< The current mouse press location.*/
+
+    //=========================================================================================================
+    /**
+    * Reimplemented double mouse press event.
+    */
+    void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* mouseEvent);
+
     int         m_iChannelTypeMode;
 };
 
