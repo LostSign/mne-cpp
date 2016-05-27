@@ -81,6 +81,9 @@ class DISPSHARED_EXPORT TFPlotScene : public LayoutScene
     Q_OBJECT
 
 public:
+
+    typedef TFPlotSceneItem TFSceneItem;
+
     //=========================================================================================================
     /**
     * Constructs a TFPlotScene.
@@ -95,6 +98,14 @@ public:
     * @param [in] bad channel list.
     */
     void repaintItems(QList<TFPlotItemStruct> tfPlotStructList, QStringList badChannels);
+
+    void fitInView();
+
+
+
+signals:
+
+    void current_item_dbclicked(TFSceneItem * item);
 
 protected:
      QPointF                         m_mousePressPosition;           /**< The current mouse press location.*/

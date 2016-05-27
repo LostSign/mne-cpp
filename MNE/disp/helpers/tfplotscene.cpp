@@ -40,7 +40,6 @@
 
 #include "tfplotscene.h"
 
-
 //*************************************************************************************************************
 //=============================================================================================================
 // USED NAMESPACES
@@ -48,7 +47,6 @@
 
 using namespace DISPLIB;
 using namespace std;
-
 
 //*************************************************************************************************************
 //=============================================================================================================
@@ -97,12 +95,50 @@ void TFPlotScene::repaintItems(QList<TFPlotItemStruct> tfPlotStructList, QString
 
 void TFPlotScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* mouseEvent)
 {
-    this->selectedItems();
-
-    if(mouseEvent->button() == Qt::LeftButton)
+    QGraphicsItem *item = this->itemAt(mouseEvent->buttonDownScenePos(Qt::LeftButton), QTransform());
+    if(item)
+    {
+        TFPlotSceneItem *tfItem = dynamic_cast<TFPlotSceneItem *>(item);
+        if(tfItem)
+           emit current_item_dbclicked(tfItem);
+    }
+    else if(mouseEvent->button() == Qt::LeftButton)
         m_qvView->fitInView(this->itemsBoundingRect(), Qt::KeepAspectRatio);
-
-
 
     QGraphicsScene::mouseDoubleClickEvent(mouseEvent);
 }
+
+//*************************************************************************************************************
+
+void TFPlotScene::fitInView()
+{
+     m_qvView->fitInView(this->itemsBoundingRect(), Qt::KeepAspectRatio);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

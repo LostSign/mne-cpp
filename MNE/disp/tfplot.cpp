@@ -130,7 +130,7 @@ void TFplot::calc_plot(MatrixXd tf_matrix, qreal sample_rate, ColorMaps cmap, qr
             image_to_tf_plot->setPixel(x, tf_matrix.rows() - 1 -  y,  color.rgb());
         }
 
-    *image_to_tf_plot = image_to_tf_plot->scaled(tf_matrix.cols(), tf_matrix.cols()/2, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    //*image_to_tf_plot = image_to_tf_plot->scaled(tf_matrix.cols(), tf_matrix.cols()/2, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     *image_to_tf_plot = image_to_tf_plot->scaledToWidth(/*0.9 **/ 1026, Qt::SmoothTransformation);
     //image to pixmap
     QGraphicsPixmapItem *tf_pixmap = new QGraphicsPixmapItem(QPixmap::fromImage(*image_to_tf_plot));
@@ -169,7 +169,7 @@ void TFplot::calc_plot(MatrixXd tf_matrix, qreal sample_rate, ColorMaps cmap, qr
         }
     }
 
-    *coeffs_image = coeffs_image->scaled(10, tf_matrix.cols()/2, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    //*coeffs_image = coeffs_image->scaled(10, tf_matrix.cols()/2, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     *coeffs_image = coeffs_image->scaledToHeight(image_to_tf_plot->height(), Qt::SmoothTransformation);
 
     QLayout * layout = new QGridLayout();
@@ -294,10 +294,8 @@ QImage * TFplot::creatTFPlotImage(MatrixXd tf_matrix, QSize imageSize, ColorMaps
     if(abs(mnorm) > norm1) norm1 = mnorm;
     tf_matrix /= norm1;
 
-
     qint32 y_factor =  tf_matrix.rows() / imageSize.height();
     qint32 x_factor =  tf_matrix.cols() / imageSize.width();
-
 
     //setup image
     //QImage * image_to_tf_plot = new QImage(tf_matrix.cols(), tf_matrix.rows(), QImage::Format_RGB32);
@@ -334,7 +332,7 @@ QImage * TFplot::creatTFPlotImage(MatrixXd tf_matrix, QSize imageSize, ColorMaps
                     color.setRgb(ColorMap::valueToRedBlue(abs(tf_matrix(y, x))));
                     break;
             }
-            if(ximage < image_to_tf_plot->width())
+            if(ximage < image_to_tf_plot->width() && yimage < image_to_tf_plot->height())
                 image_to_tf_plot->setPixel(ximage, image_to_tf_plot->height() - 1 - yimage,  color.rgb());
             ximage++;
         }
@@ -342,7 +340,7 @@ QImage * TFplot::creatTFPlotImage(MatrixXd tf_matrix, QSize imageSize, ColorMaps
     }
 
   // *image_to_tf_plot = image_to_tf_plot->scaled(tf_matrix.cols(), tf_matrix.cols()/2, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-    *image_to_tf_plot = image_to_tf_plot->scaledToWidth(/*0.9 **/ 1026, Qt::SmoothTransformation);
+  *image_to_tf_plot = image_to_tf_plot->scaledToWidth(1000, Qt::SmoothTransformation);
 
    return image_to_tf_plot;
 }
@@ -357,6 +355,5 @@ void TFplot::resizeEvent(QResizeEvent *event)
         QGraphicsView* view = (QGraphicsView*)widget;
         view->fitInView(view->sceneRect(),Qt::KeepAspectRatio);
     }
-
 }
 

@@ -603,6 +603,9 @@ QProgressBar::background{
           </layout>
          </widget>
          <widget class="QTabWidget" name="tabWidget">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
           <property name="styleSheet">
            <string notr="true">QTabWidget::pane { /* The tab widget frame */
     border-top: 0.5px solid #C2C7CB;
@@ -672,7 +675,10 @@ QTabBar::tab:only-one {
           <property name="currentIndex">
            <number>0</number>
           </property>
-          <widget class="QWidget" name="tw_Tab1">
+          <property name="tabsClosable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="tw_decomposition">
            <attribute name="title">
             <string>Decomposition</string>
            </attribute>
@@ -944,7 +950,7 @@ QTabBar::tab:only-one {
             </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="tab">
+          <widget class="QWidget" name="tab_tf_scene">
            <attribute name="title">
             <string>TF-Overview</string>
            </attribute>
@@ -956,11 +962,6 @@ QTabBar::tab:only-one {
              <widget class="QComboBox" name="cb_layouts"/>
             </item>
            </layout>
-          </widget>
-          <widget class="QWidget" name="tw_Tab2">
-           <attribute name="title">
-            <string>TF-Plot</string>
-           </attribute>
           </widget>
          </widget>
         </widget>
