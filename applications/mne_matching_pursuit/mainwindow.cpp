@@ -208,6 +208,12 @@ MainWindow::MainWindow(QWidget *parent) :    QMainWindow(parent),    ui(new Ui::
     initTFPlotSceneView();
     initComboBoxes();
 
+    // init Tabs
+    QTabBar *tabBar = ui->tabWidget->findChild<QTabBar *>();
+    tabBar->setTabButton(0, QTabBar::LeftSide, 0);
+    tabBar->setTabButton(1, QTabBar::LeftSide, 0);
+    connect(ui->tabWidget, SIGNAL(tabCloseRequested(int)), this, SLOT(closeTab(int)));
+
     QSettings settings;
     move(settings.value("pos", QPoint(200, 200)).toPoint());
     resize(settings.value("size", QSize(1050, 700)).toSize());
@@ -215,6 +221,7 @@ MainWindow::MainWindow(QWidget *parent) :    QMainWindow(parent),    ui(new Ui::
     ui->splitter->restoreState(settings.value("splitter_sizes").toByteArray());
     last_open_path = settings.value("last_open_path", QDir::homePath()+ "/" + "Matching-Pursuit-Toolbox").toString();
     last_save_path = settings.value("last_save_path", QDir::homePath()+ "/" + "Matching-Pursuit-Toolbox").toString();
+
 
     //infolabel is invisible
     if(!settings.value("show_infos", true).toBool())
@@ -422,6 +429,17 @@ void MainWindow::open_file()
 
     _atom_sum_matrix = MatrixXd::Zero(_signal_matrix.rows(), _signal_matrix.cols()); //resize
     _residuum_matrix = MatrixXd::Zero(_signal_matrix.rows(), _signal_matrix.cols()); //resize
+
+    //reset tabs und Tf-Overview
+    while(true)
+    {
+        if(ui->tabWidget->count() > 2)
+            ui->tabWidget->removeTab(ui->tabWidget->count() - 1);
+        else
+            break;
+    }
+    ui->tabWidget->setCurrentIndex(0);
+    m_tfPlotScene->clear();
 
     ui->progressBarCalc->reset();
     ui->progressBarCalc->setVisible(false);
@@ -1355,6 +1373,17 @@ void MainWindow::on_btt_Calc_clicked()
             }
         }
 
+        //reset tabs und Tf-Overview
+        while(true)
+        {
+            if(ui->tabWidget->count() > 2)
+                ui->tabWidget->removeTab(ui->tabWidget->count() - 1);
+            else
+                break;
+        }
+        ui->tabWidget->setCurrentIndex(0);
+        m_tfPlotScene->clear();
+
         ui->gb_trunc->setEnabled(false);
         ui->btt_OpenSignal->setEnabled(false);
         ui->btt_Calc->setText("cancel");
@@ -1840,42 +1869,48 @@ void MainWindow::atom_map_selection_changed()
         callAtomSumWindow->update();
         callResidumWindow->update();
     }
-    else if(ui->tabWidget->currentIndex() == 2)
+    // update TF-Plot
+    else if(ui->tabWidget->currentIndex() >= 2)
     {
+        qint32 i = 0;
+        qint32 k = 0;
+        qint32 index = ui->tabWidget->currentIndex();
+        QString name = ui->tabWidget->tabText(index);
         MatrixXd tf_sum = MatrixXd::Zero(floor(_adaptive_atom_list.first().first().sample_count/2), _adaptive_atom_list.first().first().sample_count);
         if(ui->cb_all_select->checkState() != Qt::Unchecked)
         {
-            for(qint32 i = 0; i < _adaptive_atom_list.first().length(); i++)//foreach channel
+            QMapIterator<qint32, bool> channel(select_channel_map);
+            while (channel.hasNext())
             {
-                for(qint32 j = 0; j < _adaptive_atom_list.length(); j++) //foreach atom
+                channel.next();
+                QString cur_Name = pick_info.ch_names.at(k);
+                if(channel.value())
                 {
-                    if(ui->cb_all_select->checkState() == Qt::Checked)
+                    if(cur_Name == name)
                     {
-                        GaborAtom atom  = _adaptive_atom_list.at(j).at(i);
-                        MatrixXd tf_matrix = atom.make_tf(atom.sample_count, atom.scale, atom.translation, atom.modulation);
+                        for(qint32 j = 0; j < _adaptive_atom_list.length(); j++) //foreach atom
+                        {
+                            if(ui->cb_all_select->checkState() == Qt::Checked || select_atoms_map[j])
+                            {
+                                GaborAtom atom  = _adaptive_atom_list.at(j).first();
+                                MatrixXd tf_matrix = atom.make_tf(atom.sample_count, atom.scale, atom.translation, atom.modulation);
 
-                        tf_matrix *= atom.max_scalar_list.at(i)*atom.max_scalar_list.at(i);
-                        tf_sum += tf_matrix;
+                                tf_matrix *= atom.max_scalar_list.at(i)*atom.max_scalar_list.at(i);
+                                tf_sum += tf_matrix;
+                            }
+                        }
                     }
-                    else if(select_atoms_map[j])
-                    {
-                        GaborAtom atom  = _adaptive_atom_list.at(j).at(i);
-                        MatrixXd tf_matrix = atom.make_tf(atom.sample_count, atom.scale, atom.translation, atom.modulation);
-
-                        tf_matrix *= atom.max_scalar_list.at(i)*atom.max_scalar_list.at(i);
-                        tf_sum += tf_matrix;
-                    }
-
+                    i++;
                 }
+                k++;
             }
         }
+
         tbv_is_loading = true;
         TFplot *tfplot = new TFplot(tf_sum, _sample_rate, 0, 600, Jet);
-        if(ui->tabWidget->count() >= 3)
-            ui->tabWidget->removeTab(2);
-
-        ui->tabWidget->addTab(tfplot, "TF-Plot");
-        ui->tabWidget->setCurrentIndex(2);
+        ui->tabWidget->removeTab(index);
+        ui->tabWidget->insertTab(index, tfplot, name);
+        ui->tabWidget->setCurrentIndex(index);
         tfplot->resize(ui->tabWidget->size());
         tbv_is_loading = false;
     }
@@ -1887,6 +1922,8 @@ void MainWindow::calc_thread_finished()
 {
     is_calulating = false;
     tbv_is_loading = true;
+
+    updateTFScene();
 
     if(_fix_dict_atom_list.isEmpty() && !_adaptive_atom_list.isEmpty())
         ui->actionExport->setEnabled(true);
@@ -3373,7 +3410,7 @@ void MainWindow::on_rb_OwnDictionary_clicked()
 void MainWindow::on_actionTFplot_triggered()
 {   /*
     if(ui->tabWidget->count() == 1)
-    {       
+    {
         MatrixXd tf_sum;
 
         tf_sum = MatrixXd::Zero(floor(_adaptive_atom_list.first().first().sample_count/2), _adaptive_atom_list.first().first().sample_count);
@@ -3428,71 +3465,15 @@ void MainWindow::on_actionTFplot_triggered()
 
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
-    if(index == 2)
-    {
-        if(tbv_is_loading) return;
-        // update ui
-        atom_map_selection_changed();
-    }
     if(index == 1)
     {
-       if(_fix_dict_atom_list.isEmpty() &&  _adaptive_atom_list.isEmpty())
-           return;
-
-       if(!_fix_dict_atom_list.isEmpty() )
-       {
-
-       }
-       else if(!_adaptive_atom_list.isEmpty())
-       {
-           qint32 k = 0;
-           qint32 l =0;
-           QString selectionName(ui->cb_layouts->currentText());
-           QString path = QCoreApplication::applicationDirPath() + selectionName.prepend("/MNE_Browse_Raw_Resources/Templates/Layouts/");
-          
-           LayoutLoader::readMNELoutFile(path, m_layoutMap);
-
-           QMapIterator<qint32, bool> channel(select_channel_map);
-           while (channel.hasNext())
-           {
-               channel.next();
-               QPointF cur_coordinate;
-               QImage *tf_image = new QImage("test");
-               QString cur_name =pick_info.ch_names.at(k);
-
-               cur_coordinate = m_layoutMap[cur_name];
-
-               if(channel.value())
-               {
-                   MatrixXd tf_sum = MatrixXd::Zero(floor(_adaptive_atom_list.first().first().sample_count/2), _adaptive_atom_list.first().first().sample_count);
-
-                   for(qint32 i = 0; i < _adaptive_atom_list.length(); i++) //foreach atom
-                   {
-                       GaborAtom atom  = _adaptive_atom_list.at(i).first();
-                       MatrixXd tf_matrix = atom.make_tf(atom.sample_count, atom.scale, atom.translation, atom.modulation);
-
-                       tf_matrix *= atom.max_scalar_list.at(l)*atom.max_scalar_list.at(l);
-                       tf_sum += tf_matrix;
-                   }
-
-                   TFplot *tf_plot;
-                   tf_image = tf_plot->creatTFPlotImage(tf_sum, Jet);
-
-                   l++;
-               }
-               TFPlotItemStruct tfPlotItemStruct;
-               tfPlotItemStruct.channelName = cur_name;
-               tfPlotItemStruct.coordinates = cur_coordinate;
-               tfPlotItemStruct.tfPlotImage = tf_image;
-               m_tfPlotItemStructList.append(tfPlotItemStruct);
-               k++;
-           }
-
-           QStringList(bad);
-           m_tfPlotScene->repaintItems(m_tfPlotItemStructList, bad);
-           m_tfPlotScene->update();
-       }
+       //ToDo: m_tfPlotScene->fitInView();
     }
+    if(index >= 2)
+    {
+        if(tbv_is_loading) return;       
+        atom_map_selection_changed();
+    }  
 }
 
 //*************************************************************************************************************
@@ -3500,10 +3481,10 @@ void MainWindow::on_tabWidget_currentChanged(int index)
 void MainWindow::initTFPlotSceneView()
 {
     //Create layout scene and set to view
-    m_tfPlotScene = new TFPlotScene(ui->gv_tfplot_overview);
+    m_tfPlotScene = new TFPlotScene(ui->gv_tfplot_overview, this);
     ui->gv_tfplot_overview->setScene(m_tfPlotScene);
 
-   //++ connect(m_pSelectionScene, &QGraphicsScene::selectionChanged, this, &SelectionManagerWindow::updateUserDefinedChannelsList);
+    connect(m_tfPlotScene, &TFPlotScene::current_item_dbclicked, this, &MainWindow::recieve_current_item);
 }
 
 //*************************************************************************************************************
@@ -3515,7 +3496,7 @@ void MainWindow::initComboBoxes()
                                 << "babymeg-mag-inner-layer.lout"
                                 << "babymeg-mag-outer-layer.lout"
                                 //      << "babymeg-mag-ref.lout"
-                                <<"Vectorview-grad.lout"
+                                << "Vectorview-grad.lout"
                                 << "Vectorview-all.lout"
                                 << "Vectorview-mag.lout"
                                 << "dukeEEG64dry.lout"
@@ -3525,9 +3506,11 @@ void MainWindow::initComboBoxes()
 
     connect(ui->cb_layouts, &QComboBox::currentTextChanged, this, &MainWindow::onComboBoxLayoutChanged);
 
-    //Initialise layout as neuromag vectorview with all channels
+    //Initialise layout as Vectorview with all channels
     QString selectionName("Vectorview-all.lout");
-    loadLayout(QCoreApplication::applicationDirPath() + selectionName.prepend("/MNE_Browse_Raw_Resources/Templates/Layouts/"));
+    //loadLayout(QCoreApplication::applicationDirPath() + selectionName.prepend("/Resources/2DLayouts/"));
+
+    ui->cb_layouts->setCurrentIndex(ui->cb_layouts->findData(selectionName, Qt::DisplayRole));
     ui->cb_layouts->setCurrentText(selectionName);
 }
 
@@ -3536,13 +3519,13 @@ void MainWindow::initComboBoxes()
 void MainWindow::onComboBoxLayoutChanged()
 {
     QString selectionName(ui->cb_layouts->currentText());
-    loadLayout(QCoreApplication::applicationDirPath() + selectionName.prepend("/MNE_Browse_Raw_Resources/Templates/Layouts/"));
+    loadLayout(QCoreApplication::applicationDirPath() + selectionName.prepend("/Resources/2DLayouts/"));
 }
 
 //*************************************************************************************************************
 
 bool MainWindow::loadLayout(QString path)
-{
+{    
     bool state = LayoutLoader::readMNELoutFile(path, m_layoutMap);
 
     QStringList bad;
@@ -3555,4 +3538,114 @@ bool MainWindow::loadLayout(QString path)
 }
 
 //*************************************************************************************************************
+
+void MainWindow::recieve_current_item(TFSceneItem *item)
+{
+    if(!_adaptive_atom_list.isEmpty())
+    {
+        QWidget *w = new QWidget();
+        ui->tabWidget->addTab(w, item->m_sChannelName);
+        ui->tabWidget->setCurrentIndex(ui->tabWidget->count() - 1);
+        atom_map_selection_changed();
+    }
+}
+
+//*************************************************************************************************************
+
+void MainWindow::updateTFScene()
+{
+    if(_fix_dict_atom_list.isEmpty() &&  _adaptive_atom_list.isEmpty())
+        return;
+
+    if(!_fix_dict_atom_list.isEmpty() )
+    {
+
+    }
+    else if(!_adaptive_atom_list.isEmpty())
+    {
+        qint32 k = 0;
+        qint32 l =0;
+        QString selectionName(ui->cb_layouts->currentText());
+        QString path = QCoreApplication::applicationDirPath() + selectionName.prepend("/Resources/2DLayouts/");
+        LayoutLoader::readMNELoutFile(path, m_layoutMap);
+
+        QMapIterator<qint32, bool> channel(select_channel_map);
+        while (channel.hasNext())
+        {
+            channel.next();
+            QPointF cur_coordinate;
+            QImage *tf_image = new QImage("test");
+            QString cur_name =pick_info.ch_names.at(k);
+
+            cur_coordinate = m_layoutMap[cur_name];
+
+            if(channel.value())
+            {
+                MatrixXd tf_sum = MatrixXd::Zero(floor(_adaptive_atom_list.first().first().sample_count/2), _adaptive_atom_list.first().first().sample_count);
+
+                for(qint32 i = 0; i < _adaptive_atom_list.length(); i++) //foreach atom
+                {
+                    GaborAtom atom  = _adaptive_atom_list.at(i).first();
+                    MatrixXd tf_matrix = atom.make_tf(atom.sample_count, atom.scale, atom.translation, atom.modulation);
+
+                    tf_matrix *= atom.max_scalar_list.at(l)*atom.max_scalar_list.at(l);
+                    tf_sum += tf_matrix;
+                }
+
+                TFplot *tf_plot;
+                tf_image = tf_plot->creatTFPlotImage(tf_sum, QSize(60,30), Jet);
+
+                l++;
+            }
+            TFPlotItemStruct tfPlotItemStruct;
+            tfPlotItemStruct.channelName = cur_name;
+            tfPlotItemStruct.coordinates = cur_coordinate;
+            tfPlotItemStruct.tfPlotImage = tf_image;
+            m_tfPlotItemStructList.append(tfPlotItemStruct);
+            k++;
+        }
+
+        QStringList(bad);
+        m_tfPlotScene->repaintItems(m_tfPlotItemStructList, bad);
+        m_tfPlotScene->update();
+    }
+}
+
+//*************************************************************************************************************
+
+ void MainWindow::closeTab(int tabIndex)
+ {
+     ui->tabWidget->removeTab(tabIndex);
+ }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

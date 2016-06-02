@@ -159,7 +159,8 @@ public:
     typedef QList<FixDictAtom> fix_dict_atom_list;
     typedef QMap<qint32, bool> select_map;
     typedef Eigen::VectorXd VectorXd;
-    typedef Eigen::RowVectorXi RowVectorXi;    
+    typedef Eigen::RowVectorXi RowVectorXi;
+    typedef TFPlotSceneItem TFSceneItem;
 
 
 private slots:
@@ -558,7 +559,9 @@ private slots:
     void on_rb_OwnDictionary_clicked();
     void on_actionTFplot_triggered();
     void on_tabWidget_currentChanged(int index);
-    void onComboBoxLayoutChanged();
+    void onComboBoxLayoutChanged();   
+    void recieve_current_item(TFSceneItem * item);
+    void closeTab(int tabIndex);
 
 signals:
 
@@ -879,6 +882,7 @@ private:
     void initComboBoxes();
     bool loadLayout(QString path);
     void initTFPlotSceneView();
+    void updateTFScene();
 
     //=========================================================================================================
 
