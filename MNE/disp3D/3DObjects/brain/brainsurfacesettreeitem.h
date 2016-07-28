@@ -42,13 +42,9 @@
 //=============================================================================================================
 
 #include "../../disp3D_global.h"
-
 #include "../../helpers/abstracttreeitem.h"
-#include "brainhemispheretreeitem.h"
 
-#include "fs/label.h"
-#include "fs/annotationset.h"
-#include "fs/surfaceset.h"
+#include <mne/mne_forwardsolution.h>
 
 
 //*************************************************************************************************************
@@ -56,20 +52,37 @@
 // Qt INCLUDES
 //=============================================================================================================
 
-#include <QList>
-#include <QVariant>
-#include <QStringList>
-#include <QColor>
-#include <QStandardItem>
-#include <QStandardItemModel>
-
 
 //*************************************************************************************************************
 //=============================================================================================================
 // Eigen INCLUDES
 //=============================================================================================================
 
-#include <Eigen/Core>
+
+//*************************************************************************************************************
+//=============================================================================================================
+// FORWARD DECLARATIONS
+//=============================================================================================================
+
+namespace FSLIB {
+    class SurfaceSet;
+    class AnnotationSet;
+    class Surface;
+    class Annotation;
+}
+
+namespace MNELIB {
+    class MNESourceSpace;
+    class MNESourceEstimate;
+}
+
+namespace FIFFLIB{
+    class FiffDigPointSet;
+}
+
+namespace Qt3DCore {
+    class QEntity;
+}
 
 
 //*************************************************************************************************************
@@ -84,6 +97,8 @@ namespace DISP3DLIB
 //=============================================================================================================
 // FORWARD DECLARATIONS
 //=============================================================================================================
+
+class BrainRTSourceLocDataTreeItem;
 
 
 //=============================================================================================================
@@ -157,6 +172,29 @@ public:
     */
     bool addData(const MNELIB::MNESourceSpace& tSourceSpace, Qt3DCore::QEntity* p3DEntityParent = 0);
 
+    //=========================================================================================================
+    /**
+    * Adds source estimated activation data.
+    *
+    * @param[in] tSourceEstimate    The MNESourceEstimate.
+    * @param[in] tForwardSolution   The MNEForwardSolution.
+    *
+    * @return                       Returns a list with the tree items which now hold the activation data. Use this list to update the data, i.e. during real time applications.
+    */
+    BrainRTSourceLocDataTreeItem* addData(const MNELIB::MNESourceEstimate& tSourceEstimate, const MNELIB::MNEForwardSolution& tForwardSolution = MNELIB::MNEForwardSolution());
+
+    //=========================================================================================================
+    /**
+    * Adds digitizer data to this item.
+    *
+    * @param[in] digitizerkind      The kind of the digitizer data.
+    * @param[in] tDigitizer         The digitizer data.
+    * @param[in] p3DEntityParent    The Qt3D entity parent of the new item.
+    *
+    * @return                       Returns true if successful.
+    */
+    bool addData(const FIFFLIB::FiffDigPointSet& tDigitizer, Qt3DCore::QEntity* p3DEntityParent = 0);
+
 private:
     //=========================================================================================================
     /**
@@ -165,6 +203,23 @@ private:
     * @param[in] checkState        The current checkstate.
     */
     virtual void onCheckStateChanged(const Qt::CheckState& checkState);
+
+    //=========================================================================================================
+    /**
+    * Call this function whenever new colors for the activation data plotting are available.
+    *
+    * @param[in] sourceColorSamples     The color values for each estimated source for left and right hemisphere.
+    */
+    void onRtVertColorChanged(const QPair<QByteArray, QByteArray>& sourceColorSamples);
+
+    //=========================================================================================================
+    /**
+    * This function gets called whenever the origin of the surface vertex color (curvature, annoation, etc.) changed.
+    */
+    void onColorInfoOriginChanged();
+
+    BrainRTSourceLocDataTreeItem*   m_pBrainRTSourceLocDataTreeItem;        /**< The rt data item of this hemisphere item. Multiple rt data item's can be added to this hemipshere item. */
+
 };
 
 } //NAMESPACE DISP3DLIB

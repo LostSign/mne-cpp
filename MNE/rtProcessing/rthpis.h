@@ -77,14 +77,14 @@
 //=============================================================================================================
 
 #include <Eigen/Core>
-#include <unsupported/Eigen/FFT>
+
 
 //*************************************************************************************************************
 //=============================================================================================================
-// DEFINE NAMESPACE RTPROCLIB
+// DEFINE NAMESPACE RTPROCESSINGLIB
 //=============================================================================================================
 
-namespace RTPROCLIB
+namespace RTPROCESSINGLIB
 {
 
 
@@ -105,6 +105,8 @@ using namespace FIFFLIB;
 struct coilParam {
     Eigen::MatrixXd pos;
     Eigen::MatrixXd mom;
+    Eigen::VectorXd dpfiterror;
+    Eigen::VectorXd dpfitnumitr;
 };
 
 struct dipError {
@@ -246,6 +248,8 @@ public:
     QMutex ReadMutex;
 
     bool SendDataToBuffer;
+
+    int simplex_numitr;
 
 };
 

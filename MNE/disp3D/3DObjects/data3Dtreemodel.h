@@ -43,16 +43,7 @@
 
 #include "../disp3D_global.h"
 
-#include "bem/bemtreeitem.h"
-#include "subject/subjecttreeitem.h"
-#include "brain/brainsurfacetreeitem.h"
-#include "brain/brainsurfacesettreeitem.h"
-
-#include "../helpers/renderable3Dentity.h"
-
-#include <mne/mne_bem.h>
-#include <fs/surfaceset.h>
-#include <fs/annotationset.h>
+#include <mne/mne_forwardsolution.h>
 
 
 //*************************************************************************************************************
@@ -60,15 +51,40 @@
 // QT INCLUDES
 //=============================================================================================================
 
-#include <QSharedPointer>
+#include <QStandardItemModel>
 
-#include <Qt3DCore/QEntity>
+
+//*************************************************************************************************************
+//=============================================================================================================
+// Eigen INCLUDES
+//=============================================================================================================
 
 
 //*************************************************************************************************************
 //=============================================================================================================
 // FORWARD DECLARATIONS
 //=============================================================================================================
+
+namespace Qt3DCore {
+    class QEntity;
+}
+
+namespace FSLIB {
+    class SurfaceSet;
+    class AnnotationSet;
+    class Annotation;
+    class Surface;
+}
+
+namespace MNELIB {
+    class MNESourceSpace;
+    class MNEBem;
+    class MNESourceEstimate;
+}
+
+namespace FIFFLIB{
+    class FiffDigPointSet;
+}
 
 
 //*************************************************************************************************************
@@ -84,6 +100,8 @@ namespace DISP3DLIB
 //=============================================================================================================
 // FORWARD DECLARATIONS
 //=============================================================================================================
+
+class BrainRTSourceLocDataTreeItem;
 
 
 //=============================================================================================================
@@ -181,11 +199,23 @@ public:
     *
     * @param[in] subject            The name of the subject.
     * @param[in] set                The name of the bem set to which the data is to be added.
-    * @param[in] tSourceSpace       The source space information.
+    * @param[in] tBem               The Bem information.
     *
     * @return                       Returns true if successful.
     */
     bool addData(const QString& subject, const QString& set, const MNELIB::MNEBem& tBem);
+
+    //=========================================================================================================
+    /**
+    * Adds digitizer data.
+    *
+    * @param[in] subject            The name of the subject.
+    * @param[in] set                The name of the measurment set to which the data is to be added.
+    * @param[in] tDigitizer         The digitizer information.
+    *
+    * @return                       Returns true if successful.
+    */
+    bool addData(const QString& subject, const QString& set, const FIFFLIB::FiffDigPointSet &tDigitizer);
 
 protected:
     QStandardItem*          m_pRootItem;            /**< The root item of the tree model. */

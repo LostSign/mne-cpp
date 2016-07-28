@@ -41,6 +41,7 @@
 
 #include <disp3D/view3D.h>
 #include <disp3D/control/control3dwidget.h>
+#include <disp3D/3DObjects/brain/brainrtsourcelocdatatreeitem.h>
 
 #include <fs/label.h>
 #include <fs/surfaceset.h>
@@ -48,6 +49,7 @@
 
 #include <fiff/fiff_evoked.h>
 #include <fiff/fiff.h>
+#include <fiff/fiff_dig_point_set.h>
 #include <mne/mne.h>
 
 #include <mne/mne_epoch_data_list.h>
@@ -106,12 +108,12 @@ int main(int argc, char *argv[])
     QCommandLineParser parser;
     parser.setApplicationDescription("Start disp3D tutorial");
     parser.addHelpOption();
-    QCommandLineOption sampleSurfOption("surfType", "Surface type <type>.", "type", "pial");
+    QCommandLineOption sampleSurfOption("surfType", "Surface type <type>.", "type", "inflated");
     QCommandLineOption sampleAnnotOption("annotType", "Annotation type <type>.", "type", "aparc.a2009s");
     QCommandLineOption sampleHemiOption("hemi", "Selected hemisphere <hemi>.", "hemi", "2");
     QCommandLineOption sampleSubjectOption("subject", "Selected subject <subject>.", "subject", "sample");
     QCommandLineOption sampleSubjectPathOption("subjectPath", "Selected subject path <subjectPath>.", "subjectPath", "./MNE-sample-data/subjects");
-    QCommandLineOption sampleSourceLocOption("doSourceLoc", "Do real time source localization <doSourceLoc>.", "doSourceLoc", "true");
+    QCommandLineOption sampleSourceLocOption("doSourceLoc", "Do real time source localization <doSourceLoc>.", "doSourceLoc", "false");
     QCommandLineOption sampleFwdOption("fwd", "Path to forwad solution <file>.", "file", "./MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif");
     QCommandLineOption sampleInvOpOption("invOp", "Path to inverse operator <file>.", "file", "");
     QCommandLineOption sampleClustOption("doClust", "Path to clustered inverse operator <doClust>.", "doClust", "true");
@@ -250,19 +252,34 @@ int main(int argc, char *argv[])
     View3D::SPtr testWindow = View3D::SPtr(new View3D());
 //    testWindow->addBrainData("Subject01", "HemiLRSet", tSurfLeft, tAnnotLeft);
 //    testWindow->addBrainData("Subject01", "HemiLRSet", tSurfRight, tAnnotRight);
-    testWindow->addBrainData("Subject01", "Surface", tSurfSet, tAnnotSet);
+//    testWindow->addBrainData("Subject01", "Surface", tSurfSet, tAnnotSet);
     testWindow->addBrainData("Subject01", "Right Auditory", tSurfSet, tAnnotSet);
     testWindow->addBrainData("Subject01", "Right Visual", tSurfSet, tAnnotSet);
-    //testWindow->addBrainData("Subject01", "Left Auditory", tSurfSet, tAnnotSet);
-    //testWindow->addBrainData("Subject01", "Left Visual", tSurfSet, tAnnotSet);
+    testWindow->addBrainData("Subject01", "Left Auditory", tSurfSet, tAnnotSet);
+    testWindow->addBrainData("Subject01", "Left Visual", tSurfSet, tAnnotSet);
 
-    //Read & show BEM
-    QFile t_fileBem("./MNE-sample-data/subjects/sample/bem/sample-5120-5120-5120-bem.fif");
-    MNEBem t_Bem(t_fileBem);
-    QFile t_fileBem2("./MNE-sample-data/subjects/sample/bem/sample-head.fif");
-    MNEBem t_Bem2(t_fileBem2);
-    testWindow->addBemData("Subject01", "BEM", t_Bem2);
-    //testWindow->addBemData("Subject01", "BEM", t_Bem);
+    //Read & show BEM and sensor surfaces
+//    QFile t_fileBem("./MNE-sample-data/subjects/sample/bem/sample-5120-5120-5120-bem.fif");
+//    MNEBem t_Bem(t_fileBem);
+//    QFile t_fileBem2("./MNE-sample-data/subjects/sample/bem/sample-head.fif");
+//    MNEBem t_Bem2(t_fileBem2);
+//    QFile t_filesensorSurfaceVV("./resources/sensorSurfaces/306m_rt.fif");
+//    MNEBem t_sensorSurfaceVV(t_filesensorSurfaceVV);
+//    QFile t_filesensorSurfaceBM("./resources/sensorSurfaces/BabyMEG.fif");
+//    MNEBem t_sensorSurfaceBM(t_filesensorSurfaceBM);
+
+//    testWindow->addBemData("Subject01", "BEM", t_Bem);
+//    testWindow->addBemData("Subject01", "BEM", t_Bem2);
+//    testWindow->addBemData("Sensors", "VectorView", t_sensorSurfaceVV);
+//    testWindow->addBemData("Sensors", "BabyMEG", t_sensorSurfaceBM);
+
+    //
+    // Read & show digitizer points
+    //
+
+    QFile t_fileDig("./MNE-sample-data/MEG/sample/sample_audvis-ave.fif");
+    FiffDigPointSet t_Dig(t_fileDig);
+    testWindow->addDigitizerData("Subject01", "Left Auditory", t_Dig);
 
     if(bAddRtSourceLoc) {
         //testWindow->addBrainData("Subject01", "HemiLRSet", t_clusteredFwd);
@@ -271,31 +288,31 @@ int main(int argc, char *argv[])
         //rtItemList.at(0)->addData(sourceEstimate);
 
         //RA
-        //QList<BrainRTSourceLocDataTreeItem*> rtItemList_LA = testWindow->addRtBrainData("Subject01", "Left Auditory", sourceEstimate_LA, t_clusteredFwd);
+        QList<BrainRTSourceLocDataTreeItem*> rtItemList_LA = testWindow->addRtBrainData("Subject01", "Left Auditory", sourceEstimate_LA, t_clusteredFwd);
         QList<BrainRTSourceLocDataTreeItem*> rtItemList_RA = testWindow->addRtBrainData("Subject01", "Right Auditory", sourceEstimate_RA, t_clusteredFwd);
-        //QList<BrainRTSourceLocDataTreeItem*> rtItemList_LV = testWindow->addRtBrainData("Subject01", "Left Visual", sourceEstimate_LV, t_clusteredFwd);
+        QList<BrainRTSourceLocDataTreeItem*> rtItemList_LV = testWindow->addRtBrainData("Subject01", "Left Visual", sourceEstimate_LV, t_clusteredFwd);
         QList<BrainRTSourceLocDataTreeItem*> rtItemList_RV = testWindow->addRtBrainData("Subject01", "Right Visual", sourceEstimate_RV, t_clusteredFwd);
 
-        //Init some rt related values
-        for(int i = 0; i < rtItemList_RA.size(); ++i) {
-            rtItemList_RA.at(i)->setLoopState(true);
-            rtItemList_RA.at(i)->setTimeInterval(75);
-            rtItemList_RA.at(i)->setNumberAverages(7);
-            rtItemList_RA.at(i)->setStreamingActive(true);
-            rtItemList_RA.at(i)->setNormalization(QVector3D(5.0,0.5,15));
-            rtItemList_RA.at(i)->setVisualizationType("Annotation based");
-            rtItemList_RA.at(i)->setColortable("Hot");
-        }
+//        //Init some rt related values
+//        for(int i = 0; i < rtItemList_RA.size(); ++i) {
+//            rtItemList_RA.at(i)->setLoopState(true);
+//            rtItemList_RA.at(i)->setTimeInterval(50);
+//            rtItemList_RA.at(i)->setNumberAverages(1);
+//            rtItemList_RA.at(i)->setStreamingActive(true);
+//            rtItemList_RA.at(i)->setNormalization(QVector3D(5.0,0.5,15));
+//            rtItemList_RA.at(i)->setVisualizationType("Annotation based");
+//            rtItemList_RA.at(i)->setColortable("Hot");
+//        }
 
         //Init some rt related values
         for(int i = 0; i < rtItemList_RV.size(); ++i) {
             rtItemList_RV.at(i)->setLoopState(true);
-            rtItemList_RV.at(i)->setTimeInterval(75);
-            rtItemList_RV.at(i)->setNumberAverages(7);
+            rtItemList_RV.at(i)->setTimeInterval(50);
+            rtItemList_RV.at(i)->setNumberAverages(1);
             rtItemList_RV.at(i)->setStreamingActive(true);
-            rtItemList_RV.at(i)->setNormalization(QVector3D(5.0,0.5,15));
-            rtItemList_RV.at(i)->setVisualizationType("Annotation based");
-            rtItemList_RV.at(i)->setColortable("Hot");
+            rtItemList_RV.at(i)->setNormalization(QVector3D(5.0,5.5,15));
+            rtItemList_RV.at(i)->setVisualizationType("Vertex based");
+            rtItemList_RV.at(i)->setColortable("Hot Negative 1");
         }
     }
 

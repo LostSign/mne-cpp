@@ -39,29 +39,23 @@ TEMPLATE = subdirs
 
 SUBDIRS += \
     test_codecov \
-    test_fiff_rwr
+    test_fiff_rwr \
 #    test_mne_libs \
 #    test_mne_rt \
 #    mne_x_plugin_com \
 #    test_mne_future \
 #    test_ssp \
 
-#contains(MNECPP_CONFIG, withGui) {
-#    SUBDIRS += \
-#        test_mne_graph \
+#!contains(MNECPP_CONFIG, minimalVersion) {
+    SUBDIRS += \
+#        test_mne_graph
 #        test_mne_cluster_eval \
 #        test_rap_cluster_eval \
 #        test_rtc_eval \
 #        test_rap_eval \
-#       test_orig_rap_cluster_eval \
-
-#    qtHaveModule(3dcore,3drender,3dinput) {
-#        message(testframes.pro - Qt3D available)
-#        message(Qt3D available && QTVersion >= Qt 5.6: mne 3D tests configured!)
-#        SUBDIRS += \
-#            mne_3d_widget \
-#            test_mne_cluster \
-#            test_mne_surface \
-#            test_mne_stc \
-#    }
+#        test_orig_rap_cluster_eval \
+#        mne_3d_widget \
+#        test_mne_cluster \
+#        test_mne_surface \
+#        test_mne_stc \
 #}

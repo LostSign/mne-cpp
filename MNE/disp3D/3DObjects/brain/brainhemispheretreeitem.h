@@ -42,20 +42,7 @@
 //=============================================================================================================
 
 #include "../../disp3D_global.h"
-
 #include "../../helpers/abstracttreeitem.h"
-
-#include "brainsurfacetreeitem.h"
-#include "brainannotationtreeitem.h"
-#include "brainrtsourcelocdatatreeitem.h"
-#include "brainsourcespacetreeitem.h"
-
-#include "fs/label.h"
-#include "fs/annotationset.h"
-#include "fs/surfaceset.h"
-
-#include "mne/mne_forwardsolution.h"
-#include "mne/mne_sourceestimate.h"
 
 
 //*************************************************************************************************************
@@ -63,20 +50,33 @@
 // Qt INCLUDES
 //=============================================================================================================
 
-#include <QList>
-#include <QVariant>
-#include <QStringList>
-#include <QColor>
-#include <QStandardItem>
-#include <QStandardItemModel>
-
 
 //*************************************************************************************************************
 //=============================================================================================================
 // Eigen INCLUDES
 //=============================================================================================================
 
-#include <Eigen/Core>
+
+//*************************************************************************************************************
+//=============================================================================================================
+// FORWARD DECLARATIONS
+//=============================================================================================================
+
+namespace FSLIB {
+    class Annotation;
+
+}
+
+namespace MNELIB {
+    class MNEHemisphere;
+    class MNESourceSpace;
+    class MNESourceEstimate;
+    class MNEForwardSolution;
+}
+
+namespace Qt3DCore {
+    class QEntity;
+}
 
 
 //*************************************************************************************************************
@@ -91,6 +91,10 @@ namespace DISP3DLIB
 //=============================================================================================================
 // FORWARD DECLARATIONS
 //=============================================================================================================
+
+class BrainRTSourceLocDataTreeItem;
+class BrainSurfaceTreeItem;
+class BrainAnnotationTreeItem;
 
 
 //=============================================================================================================
@@ -155,14 +159,27 @@ public:
 
     //=========================================================================================================
     /**
-    * Adds source estimated activation data.
+    * Call this function whenever new colors for the activation data plotting are available.
     *
-    * @param[in] tSourceEstimate    The MNESourceEstimate.
-    * @param[in] tForwardSolution   The MNEForwardSolution.
-    *
-    * @return                       Returns a list with the tree items which now hold the activation data. Use this list to update the data, i.e. during real time applications.
+    * @param[in] sourceColorSamples     The color values for each estimated source.
     */
-    BrainRTSourceLocDataTreeItem* addData(const MNELIB::MNESourceEstimate& tSourceEstimate, const MNELIB::MNEForwardSolution& tForwardSolution = MNELIB::MNEForwardSolution());
+    void onRtVertColorChanged(const QByteArray& sourceColorSamples);
+
+    //=========================================================================================================
+    /**
+    * Returns the surface tree item.
+    *
+    * @return The current surface tree item.
+    */
+    BrainSurfaceTreeItem* getSurfaceItem();
+
+    //=========================================================================================================
+    /**
+    * Returns the annotation tree item.
+    *
+    * @return The current annotation tree item.
+    */
+    BrainAnnotationTreeItem* getAnnotItem();
 
 private:
     //=========================================================================================================
@@ -173,10 +190,8 @@ private:
     */
     virtual void onCheckStateChanged(const Qt::CheckState& checkState);
 
-private:
     BrainSurfaceTreeItem*           m_pSurfaceItem;                     /**< The surface item of this hemisphere item. Only one surface item may exists under a hemisphere item. */
     BrainAnnotationTreeItem*        m_pAnnotItem;                       /**< The annotation item of this hemisphere item. Only one annotation item may exists under a hemisphere item. */
-    BrainRTSourceLocDataTreeItem*   m_pBrainRTSourceLocDataTreeItem;    /**< The rt data item of this hemisphere item. Multiple rt data item's can be added to this hemipshere item. */
 };
 
 } //NAMESPACE DISP3DLIB
