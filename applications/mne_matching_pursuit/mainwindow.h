@@ -54,6 +54,7 @@
 #include <utils/mp/fixdictmp.h>
 
 #include <disp/tfplot.h>
+#include <disp/tpplot.h>
 #include <disp/plot.h>
 #include <disp/helpers/colormap.h>
 #include <disp/helpers/tfplotscene.h>
