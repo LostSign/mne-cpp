@@ -3408,7 +3408,14 @@ void MainWindow::on_rb_OwnDictionary_clicked()
 //*****************************************************************************************************************
 
 void MainWindow::on_actionTFplot_triggered()
-{   /*
+{
+    QString selectionName(ui->cb_layouts->currentText());
+    loadLayout(QCoreApplication::applicationDirPath() + selectionName.prepend("/Resources/2DLayouts/"));
+
+    Tpplot tplot;
+    tplot.createMapGrid(_signal_matrix, pick_info.ch_names, m_layoutMap);
+
+    /*
     if(ui->tabWidget->count() == 1)
     {
         MatrixXd tf_sum;

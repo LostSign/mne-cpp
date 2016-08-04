@@ -286,6 +286,8 @@ void TFplot::calc_plot(MatrixXd tf_matrix, qreal sample_rate, ColorMaps cmap, qr
 
 }
 
+//*************************************************************************************************************
+
 QImage * TFplot::creatTFPlotImage(MatrixXd tf_matrix, QSize imageSize, ColorMaps cmap)
 {
     //normalisation of the tf-matrix
@@ -344,6 +346,8 @@ QImage * TFplot::creatTFPlotImage(MatrixXd tf_matrix, QSize imageSize, ColorMaps
 
    return image_to_tf_plot;
 }
+
+//*************************************************************************************************************
 
 void TFplot::resizeEvent(QResizeEvent *event)
 {

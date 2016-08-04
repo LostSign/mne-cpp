@@ -108,7 +108,8 @@ SOURCES += \
     helpers/mneoperator.cpp \
     helpers/roundededgeswidget.cpp \
     helpers/tfplotscene.cpp \
-    helpers/tfplotsceneitem.cpp
+    helpers/tfplotsceneitem.cpp \
+    tpplot.cpp
 
 HEADERS += \
     disp_global.h \
@@ -132,7 +133,8 @@ HEADERS += \
     helpers/mneoperator.h \
     helpers/roundededgeswidget.h \
     helpers/tfplotscene.h \
-    helpers/tfplotsceneitem.h
+    helpers/tfplotsceneitem.h \
+    tpplot.h
 
 INCLUDEPATH += $${EIGEN_INCLUDE_DIR}
 INCLUDEPATH += $${MNE_INCLUDE_DIR}
