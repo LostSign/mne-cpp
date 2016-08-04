@@ -37,7 +37,7 @@ include(../../mne-cpp.pri)
 
 TEMPLATE = lib
 
-QT       += widgets 3dcore 3drender 3dinput
+QT       += widgets 3dcore 3drender 3dinput 3dextras charts
 
 DEFINES += DISP3DNEW_LIBRARY
 
@@ -46,25 +46,29 @@ TARGET = $$join(TARGET,,MNE$${MNE_LIB_VERSION},)
 CONFIG(debug, debug|release) {
     TARGET = $$join(TARGET,,,d)
 }
-
+.
 RESOURCES += $$PWD/disp3d.qrc \
 
 LIBS += -L$${MNE_LIBRARY_DIR}
 CONFIG(debug, debug|release) {
     LIBS += -lMNE$${MNE_LIB_VERSION}Genericsd \
+            -lMNE$${MNE_LIB_VERSION}Utilsd \
             -lMNE$${MNE_LIB_VERSION}Fsd \
             -lMNE$${MNE_LIB_VERSION}Fiffd \
             -lMNE$${MNE_LIB_VERSION}Mned \
             -lMNE$${MNE_LIB_VERSION}Inversed \
-            -lMNE$${MNE_LIB_VERSION}Dispd
+            -lMNE$${MNE_LIB_VERSION}Dispd \
+            -lMNE$${MNE_LIB_VERSION}DispChartsd
 }
 else {
     LIBS += -lMNE$${MNE_LIB_VERSION}Generics \
+            -lMNE$${MNE_LIB_VERSION}Utils \
             -lMNE$${MNE_LIB_VERSION}Fs \
             -lMNE$${MNE_LIB_VERSION}Fiff \
             -lMNE$${MNE_LIB_VERSION}Mne \
             -lMNE$${MNE_LIB_VERSION}Inverse \
-            -lMNE$${MNE_LIB_VERSION}Disp
+            -lMNE$${MNE_LIB_VERSION}Disp \
+            -lMNE$${MNE_LIB_VERSION}DispCharts
 }
 
 DESTDIR = $${MNE_LIBRARY_DIR}
@@ -94,7 +98,6 @@ SOURCES += \
     3DObjects/data3Dtreemodel.cpp \
     3DObjects/data3Dtreedelegate.cpp \
     3DObjects/subject/subjecttreeitem.cpp \
-    3DObjects/subject/subjecttreemetaitem.cpp \
     3DObjects/common/metatreeitem.cpp \
     3DObjects/brain/brainsurfacetreeitem.cpp \
     3DObjects/brain/brainsurfacesettreeitem.cpp \
@@ -104,21 +107,21 @@ SOURCES += \
     3DObjects/brain/brainrtconnectivitydatatreeitem.cpp \
     3DObjects/bem/bemtreeitem.cpp \
     3DObjects/bem/bemsurfacetreeitem.cpp \
+    3DObjects/digitizer/digitizertreeitem.cpp \
     helpers/abstracttreeitem.cpp \
     helpers/renderable3Dentity.cpp \
     helpers/custommesh.cpp \
-    helpers/window.cpp \
     control/control3dwidget.cpp \
     rt/rtSourceLoc/rtsourcelocdataworker.cpp \
     3DObjects/brain/brainsourcespacetreeitem.cpp \
-    materials/shadermaterial.cpp
+    materials/shadermaterial.cpp \
+    3DObjects/digitizer/digitizersettreeitem.cpp
 
 HEADERS += \
     view3D.h \
     3DObjects/data3Dtreemodel.h \
     3DObjects/data3Dtreedelegate.h \
     3DObjects/subject/subjecttreeitem.h \
-    3DObjects/subject/subjecttreemetaitem.h \
     3DObjects/common/metatreeitem.h \
     3DObjects/brain/brainsurfacetreeitem.h \
     3DObjects/brain/brainsurfacesettreeitem.h \
@@ -128,16 +131,17 @@ HEADERS += \
     3DObjects/brain/brainrtconnectivitydatatreeitem.h \
     3DObjects/bem/bemtreeitem.h \
     3DObjects/bem/bemsurfacetreeitem.h \
+    3DObjects/digitizer/digitizertreeitem.h \
     helpers/abstracttreeitem.h \
     helpers/renderable3Dentity.h \
     helpers/custommesh.h \
-    helpers/window.h \
     helpers/types.h \
     control/control3dwidget.h \
     disp3D_global.h \
     rt/rtSourceLoc/rtsourcelocdataworker.h \
     3DObjects/brain/brainsourcespacetreeitem.h \
-    materials/shadermaterial.h
+    materials/shadermaterial.h \
+    3DObjects/digitizer/digitizersettreeitem.h
 
 FORMS += \
     control/control3dwidget.ui \

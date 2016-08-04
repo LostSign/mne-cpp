@@ -39,6 +39,43 @@
 //=============================================================================================================
 
 #include "brainsurfacesettreeitem.h"
+#include "brainhemispheretreeitem.h"
+#include "brainrtsourcelocdatatreeitem.h"
+#include "brainsurfacetreeitem.h"
+#include "brainannotationtreeitem.h"
+#include "../digitizer/digitizersettreeitem.h"
+#include "../digitizer/digitizertreeitem.h"
+
+
+#include <fs/label.h>
+#include <fs/annotationset.h>
+#include <fs/surfaceset.h>
+
+#include <mne/mne_sourceestimate.h>
+#include <mne/mne_sourcespace.h>
+
+#include <fiff/fiff_dig_point_set.h>
+
+
+//*************************************************************************************************************
+//=============================================================================================================
+// Qt INCLUDES
+//=============================================================================================================
+
+#include <QList>
+#include <QVariant>
+#include <QStringList>
+#include <QColor>
+#include <QStandardItem>
+#include <QStandardItemModel>
+
+
+//*************************************************************************************************************
+//=============================================================================================================
+// Eigen INCLUDES
+//=============================================================================================================
+
+#include <Eigen/Core>
 
 
 //*************************************************************************************************************
@@ -58,6 +95,7 @@ using namespace DISP3DLIB;
 
 BrainSurfaceSetTreeItem::BrainSurfaceSetTreeItem(int iType, const QString& text)
 : AbstractTreeItem(iType, text)
+, m_pBrainRTSourceLocDataTreeItem(new BrainRTSourceLocDataTreeItem())
 {
     this->setEditable(false);
     this->setCheckable(true);
@@ -107,8 +145,8 @@ bool BrainSurfaceSetTreeItem::addData(const SurfaceSet& tSurfaceSet, const Annot
     bool hemiItemFound = false;
 
     //Search for already created hemi items and add source space data respectivley
-    for(int i = 0; i < tSurfaceSet.size(); i++) {
-        for(int j = 0; j<itemList.size(); j++) {
+    for(int i = 0; i < tSurfaceSet.size(); ++i) {
+        for(int j = 0; j < itemList.size(); ++j) {
             BrainHemisphereTreeItem* pHemiItem = dynamic_cast<BrainHemisphereTreeItem*>(itemList.at(j));
 
             if(pHemiItem->data(Data3DTreeModelItemRoles::SurfaceHemi).toInt() == tSurfaceSet[i].hemi()) {
@@ -128,7 +166,7 @@ bool BrainSurfaceSetTreeItem::addData(const SurfaceSet& tSurfaceSet, const Annot
 
         if(!hemiItemFound) {
             //Item does not exist yet, create it here.
-            BrainHemisphereTreeItem* pHemiItem = new BrainHemisphereTreeItem(Data3DTreeModelItemTypes::HemisphereItem);
+            BrainHemisphereTreeItem* pHemiItem = new BrainHemisphereTreeItem(Data3DTreeModelItemTypes::HemisphereItem);            
 
             QList<QStandardItem*> list;
             list << pHemiItem;
@@ -144,6 +182,9 @@ bool BrainSurfaceSetTreeItem::addData(const SurfaceSet& tSurfaceSet, const Annot
             } else {
                 state = pHemiItem->addData(tSurfaceSet[i], Annotation(), p3DEntityParent);
             }
+
+            connect(pHemiItem->getSurfaceItem(), &BrainSurfaceTreeItem::colorInfoOriginChanged,
+                this, &BrainSurfaceSetTreeItem::onColorInfoOriginChanged);
         }
 
         hemiItemFound = false;
@@ -165,16 +206,16 @@ bool BrainSurfaceSetTreeItem::addData(const Surface& tSurface, const Annotation&
     bool hemiItemFound = false;
 
     //Search for already created hemi items and add source space data respectivley
-    for(int j = 0; j<itemList.size(); j++) {
-        BrainHemisphereTreeItem* pHemiItem = dynamic_cast<BrainHemisphereTreeItem*>(itemList.at(j));
+    for(int j = 0; j < itemList.size(); ++j) {
+        if(BrainHemisphereTreeItem* pHemiItem = dynamic_cast<BrainHemisphereTreeItem*>(itemList.at(j))) {
+            if(pHemiItem->data(Data3DTreeModelItemRoles::SurfaceHemi).toInt() == tSurface.hemi()) {
+                hemiItemFound = true;
 
-        if(pHemiItem->data(Data3DTreeModelItemRoles::SurfaceHemi).toInt() == tSurface.hemi()) {
-            hemiItemFound = true;
-
-            if(tAnnotation.hemi() == tSurface.hemi()) {
-                state = pHemiItem->addData(tSurface, tAnnotation, p3DEntityParent);
-            } else {
-                state = pHemiItem->addData(tSurface, Annotation(), p3DEntityParent);
+                if(tAnnotation.hemi() == tSurface.hemi()) {
+                    state = pHemiItem->addData(tSurface, tAnnotation, p3DEntityParent);
+                } else {
+                    state = pHemiItem->addData(tSurface, Annotation(), p3DEntityParent);
+                }
             }
         }
     }
@@ -193,6 +234,9 @@ bool BrainSurfaceSetTreeItem::addData(const Surface& tSurface, const Annotation&
         list << pHemiItem;
         list << new QStandardItem(pHemiItem->toolTip());
         this->appendRow(list);
+
+        connect(pHemiItem->getSurfaceItem(), &BrainSurfaceTreeItem::colorInfoOriginChanged,
+            this, &BrainSurfaceSetTreeItem::onColorInfoOriginChanged);
     }
 
     return state;
@@ -212,13 +256,13 @@ bool BrainSurfaceSetTreeItem::addData(const MNESourceSpace& tSourceSpace, Qt3DCo
     bool hemiItemFound = false;
 
     //Search for already created hemi items and add source space data respectivley
-    for(int i = 0; i < tSourceSpace.size(); i++) {
-        for(int j = 0; j<itemList.size(); j++) {
-            BrainHemisphereTreeItem* pHemiItem = dynamic_cast<BrainHemisphereTreeItem*>(itemList.at(j));
-
-            if(pHemiItem->data(Data3DTreeModelItemRoles::SurfaceHemi).toInt() == i) {
-                hemiItemFound = true;
-                state = pHemiItem->addData(tSourceSpace[i], p3DEntityParent);
+    for(int i = 0; i < tSourceSpace.size(); ++i) {
+        for(int j = 0; j < itemList.size(); ++j) {
+            if(BrainHemisphereTreeItem* pHemiItem = dynamic_cast<BrainHemisphereTreeItem*>(itemList.at(j))) {
+                if(pHemiItem->data(Data3DTreeModelItemRoles::SurfaceHemi).toInt() == i) {
+                    hemiItemFound = true;
+                    state = pHemiItem->addData(tSourceSpace[i], p3DEntityParent);
+                }
             }
         }
 
@@ -243,9 +287,106 @@ bool BrainSurfaceSetTreeItem::addData(const MNESourceSpace& tSourceSpace, Qt3DCo
 
 //*************************************************************************************************************
 
+BrainRTSourceLocDataTreeItem* BrainSurfaceSetTreeItem::addData(const MNESourceEstimate& tSourceEstimate, const MNEForwardSolution& tForwardSolution)
+{
+    if(!tSourceEstimate.isEmpty()) {
+        //Add source estimation data as child
+        if(this->findChildren(Data3DTreeModelItemTypes::RTSourceLocDataItem).size() == 0) {
+            //If rt data item does not exists yet, create it here!
+            if(!tForwardSolution.isEmpty()) {
+                m_pBrainRTSourceLocDataTreeItem = new BrainRTSourceLocDataTreeItem();
+
+                QList<QStandardItem*> list;
+                list << m_pBrainRTSourceLocDataTreeItem;
+                list << new QStandardItem(m_pBrainRTSourceLocDataTreeItem->toolTip());
+                this->appendRow(list);
+
+                connect(m_pBrainRTSourceLocDataTreeItem, &BrainRTSourceLocDataTreeItem::rtVertColorChanged,
+                        this, &BrainSurfaceSetTreeItem::onRtVertColorChanged);
+
+                //Divide into left right hemi
+                QList<QStandardItem*> itemList = this->findChildren(Data3DTreeModelItemTypes::HemisphereItem);
+
+                BrainSurfaceTreeItem* pSurfaceTreeItemLeft = Q_NULLPTR;
+                BrainSurfaceTreeItem* pSurfaceTreeItemRight = Q_NULLPTR;
+                BrainAnnotationTreeItem* pAnnotTreeItemLeft = Q_NULLPTR;
+                BrainAnnotationTreeItem* pAnnotTreeItemRight = Q_NULLPTR;
+
+                for(int j = 0; j < itemList.size(); ++j) {
+                    if(BrainHemisphereTreeItem* pHemiItem = dynamic_cast<BrainHemisphereTreeItem*>(itemList.at(j))) {
+                        if(pHemiItem->data(Data3DTreeModelItemRoles::SurfaceHemi).toInt() == 0) {
+                            pSurfaceTreeItemLeft = pHemiItem->getSurfaceItem();
+                            pAnnotTreeItemLeft = pHemiItem->getAnnotItem();
+                        } else if(pHemiItem->data(Data3DTreeModelItemRoles::SurfaceHemi).toInt() == 1) {
+                            pSurfaceTreeItemRight = pHemiItem->getSurfaceItem();
+                            pAnnotTreeItemRight = pHemiItem->getAnnotItem();
+                        }
+                    }
+                }
+
+                if(pSurfaceTreeItemLeft && pSurfaceTreeItemRight && pAnnotTreeItemLeft && pAnnotTreeItemRight) {
+                    m_pBrainRTSourceLocDataTreeItem->init(tForwardSolution,
+                                                        pSurfaceTreeItemLeft->data(Data3DTreeModelItemRoles::SurfaceCurrentColorVert).value<QByteArray>(),
+                                                        pSurfaceTreeItemRight->data(Data3DTreeModelItemRoles::SurfaceCurrentColorVert).value<QByteArray>(),
+                                                        pAnnotTreeItemLeft->data(Data3DTreeModelItemRoles::LabeIds).value<VectorXi>(),
+                                                        pAnnotTreeItemRight->data(Data3DTreeModelItemRoles::LabeIds).value<VectorXi>(),
+                                                        pAnnotTreeItemLeft->data(Data3DTreeModelItemRoles::LabeList).value<QList<FSLIB::Label>>(),
+                                                        pAnnotTreeItemRight->data(Data3DTreeModelItemRoles::LabeList).value<QList<FSLIB::Label>>());
+                }
+
+                m_pBrainRTSourceLocDataTreeItem->addData(tSourceEstimate);
+            } else {
+                qDebug() << "BrainSurfaceSetTreeItem::addData - Cannot add real time data since the forwad solution was not provided and therefore the rt source localization data item has not been initilaized yet. Returning...";
+            }
+        } else {
+            m_pBrainRTSourceLocDataTreeItem->addData(tSourceEstimate);
+        }
+
+        return m_pBrainRTSourceLocDataTreeItem;
+    } else {
+        qDebug() << "BrainSurfaceSetTreeItem::addData - tSourceEstimate is empty";
+    }
+
+    return new BrainRTSourceLocDataTreeItem();
+}
+
+
+//*************************************************************************************************************
+
+bool BrainSurfaceSetTreeItem::addData(const FiffDigPointSet &tDigitizer, Qt3DCore::QEntity *p3DEntityParent)
+{
+    //Find the digitizerkind
+    QList<QStandardItem*> itemDigitizerList = this->findChildren(Data3DTreeModelItemTypes::DigitizerSetItem);
+
+    //If digitizer does not exist, create a new one
+    if(itemDigitizerList.size() == 0) {
+        DigitizerSetTreeItem* digitizerSetItem = new DigitizerSetTreeItem(Data3DTreeModelItemTypes::DigitizerSetItem,"Digitizer");
+        itemDigitizerList << digitizerSetItem;
+        itemDigitizerList << new QStandardItem(digitizerSetItem->toolTip());
+        this->appendRow(itemDigitizerList);
+    }
+
+    // Add Data to the first Digitizer Set Item
+    bool state = false;
+
+    //Check if it is really a digitizer tree item
+    if((itemDigitizerList.at(0)->type() == Data3DTreeModelItemTypes::DigitizerSetItem)) {
+        DigitizerSetTreeItem* pDigitizerSetItem = dynamic_cast<DigitizerSetTreeItem*>(itemDigitizerList.at(0));
+        state = pDigitizerSetItem->addData(tDigitizer, p3DEntityParent);
+    }
+    else{
+        state = false;
+    }
+
+    return state;
+}
+
+
+//*************************************************************************************************************
+
 void BrainSurfaceSetTreeItem::onCheckStateChanged(const Qt::CheckState& checkState)
 {
-    for(int i = 0; i<this->rowCount(); i++) {
+    for(int i = 0; i < this->rowCount(); ++i) {
         if(this->child(i)->isCheckable()) {
             this->child(i)->setCheckState(checkState);
         }
@@ -253,4 +394,46 @@ void BrainSurfaceSetTreeItem::onCheckStateChanged(const Qt::CheckState& checkSta
 }
 
 
+//*************************************************************************************************************
+
+void BrainSurfaceSetTreeItem::onRtVertColorChanged(const QPair<QByteArray, QByteArray>& sourceColorSamples)
+{
+    QList<QStandardItem*> itemList = this->findChildren(Data3DTreeModelItemTypes::HemisphereItem);
+
+    for(int j = 0; j < itemList.size(); ++j) {
+        if(BrainHemisphereTreeItem* pHemiItem = dynamic_cast<BrainHemisphereTreeItem*>(itemList.at(j))) {
+            if(pHemiItem->data(Data3DTreeModelItemRoles::SurfaceHemi).toInt() == 0) {
+                pHemiItem->onRtVertColorChanged(sourceColorSamples.first);
+            } else if (pHemiItem->data(Data3DTreeModelItemRoles::SurfaceHemi).toInt() == 1) {
+                pHemiItem->onRtVertColorChanged(sourceColorSamples.second);
+            }
+        }
+    }
+}
+
+
+//*************************************************************************************************************
+
+void BrainSurfaceSetTreeItem::onColorInfoOriginChanged()
+{
+    QList<QStandardItem*> itemList = this->findChildren(Data3DTreeModelItemTypes::HemisphereItem);
+
+    BrainSurfaceTreeItem* pSurfaceTreeItemLeft = Q_NULLPTR;
+    BrainSurfaceTreeItem* pSurfaceTreeItemRight = Q_NULLPTR;
+
+    for(int j = 0; j < itemList.size(); ++j) {
+        if(BrainHemisphereTreeItem* pHemiItem = dynamic_cast<BrainHemisphereTreeItem*>(itemList.at(j))) {
+            if(pHemiItem->data(Data3DTreeModelItemRoles::SurfaceHemi).toInt() == 0) {
+                pSurfaceTreeItemLeft = pHemiItem->getSurfaceItem();
+            } else if(pHemiItem->data(Data3DTreeModelItemRoles::SurfaceHemi).toInt() == 1) {
+                pSurfaceTreeItemRight = pHemiItem->getSurfaceItem();
+            }
+        }
+    }
+
+    if(pSurfaceTreeItemLeft && pSurfaceTreeItemRight) {
+        m_pBrainRTSourceLocDataTreeItem->onColorInfoOriginChanged(pSurfaceTreeItemLeft->data(Data3DTreeModelItemRoles::SurfaceCurrentColorVert).value<QByteArray>(),
+                                            pSurfaceTreeItemRight->data(Data3DTreeModelItemRoles::SurfaceCurrentColorVert).value<QByteArray>());
+    }
+}
 

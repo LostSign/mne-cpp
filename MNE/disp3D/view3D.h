@@ -41,15 +41,12 @@
 // INCLUDES
 //=============================================================================================================
 
-#include <iostream>
-
 #include "disp3D_global.h"
 #include "3DObjects/data3Dtreemodel.h"
 
-#include "helpers/window.h"
-#include "helpers/types.h"
-
-#include <mne/mne_sourceestimate.h>
+#include <fs/annotationset.h>
+#include <fs/annotation.h>
+#include <mne/mne_forwardsolution.h>
 
 
 //*************************************************************************************************************
@@ -57,24 +54,8 @@
 // QT INCLUDES
 //=============================================================================================================
 
-#include <QSharedPointer>
-#include <QWidget>
-#include <QWindow>
-#include <QDebug>
-
-#include <Qt3DCore/QAspectEngine>
-#include <Qt3DCore/QCamera>
-#include <Qt3DCore/QTransform>
-
-#include <Qt3DRender/QPhongMaterial>
-#include <Qt3DRender/QPerVertexColorMaterial>
-#include <Qt3DRender/QRenderAspect>
-#include <Qt3DRender/QFrameGraph>
-#include <Qt3DRender/QForwardRenderer>
-#include <Qt3DRender/QPointLight>
-#include <Qt3DRender/QCylinderMesh>
-
-#include <Qt3DInput/QInputAspect>
+#include <Qt3DExtras/Qt3DWindow>
+#include <QVector3D>
 
 
 //*************************************************************************************************************
@@ -82,6 +63,27 @@
 // FORWARD DECLARATIONS
 //=============================================================================================================
 
+class QPropertyAnimation;
+
+namespace MNELIB{
+    class MNESourceEstimate;
+    class MNESourceSpace;
+    class MNEBem;
+}
+
+namespace FSLIB{
+    class Surface;
+    class SurfaceSet;
+    class Surface;
+}
+
+namespace Qt3DCore {
+    class QTransform;
+}
+
+namespace FIFFLIB{
+    class FiffDigPointSet;
+}
 
 //*************************************************************************************************************
 //=============================================================================================================
@@ -97,6 +99,8 @@ namespace DISP3DLIB
 // FORWARD DECLARATIONS
 //=============================================================================================================
 
+class BrainRTSourceLocDataTreeItem;
+
 
 //=============================================================================================================
 /**
@@ -104,7 +108,7 @@ namespace DISP3DLIB
 *
 * @brief Visualizes 3D data
 */
-class DISP3DNEWSHARED_EXPORT View3D : public Window
+class DISP3DNEWSHARED_EXPORT View3D : public Qt3DExtras::Qt3DWindow
 {
     Q_OBJECT
 
@@ -194,11 +198,23 @@ public:
     *
     * @param[in] subject            The name of the subject.
     * @param[in] set                The name of the bem set to which the data is to be added.
-    * @param[in] tSourceSpace       The source space information.
+    * @param[in] tBem               The Bem information.
     *
     * @return                       Returns true if successful.
     */
     bool addBemData(const QString& subject, const QString& set, const MNELIB::MNEBem& tBem);
+
+    //=========================================================================================================
+    /**
+    * Adds Digitizer data.
+    *
+    * @param[in] subject            The name of the subject.
+    * @param[in] set                The name of the measurment set to which the data is to be added.
+    * @param[in] tDigitizer         The Digitizer data.
+    *
+    * @return                       Returns true if successful.
+    */
+    bool addDigitizerData(const QString& subject, const QString& set, const FIFFLIB::FiffDigPointSet &tDigitizer);
 
     //=========================================================================================================
     /**
@@ -216,32 +232,27 @@ public:
     */
     void setSceneColor(const QColor& colSceneColor);
 
+    //=========================================================================================================
+    /**
+    * Return the Qt3D root entity.
+    *
+    * @return          The SubjectTreeModel pointer.
+    */
+    Qt3DCore::QEntity* get3DRootEntity();
+
+    //=========================================================================================================
+    /**
+    * Starts to rotate all loaded 3D models.
+    */
+    void startModelRotation();
+
+    //=========================================================================================================
+    /**
+    * Stops to rotate all loaded 3D models.
+    */
+    void stopModelRotation();
+
 protected:
-    Qt3DCore::QAspectEngine             m_aspectEngine;                 /**< The aspect engine. */
-    Qt3DCore::QEntity*                  m_pRootEntity;                  /**< The root/most top level entity buffer. */
-    Qt3DInput::QInputAspect*            m_pInputAspect;                 /**< The input aspect. */
-    Qt3DCore::QCamera*                  m_pCameraEntity;                /**< The camera entity. */
-    Qt3DRender::QFrameGraph*            m_pFrameGraph;                  /**< The frame graph holding the render information. */
-    Qt3DRender::QForwardRenderer*       m_pForwardRenderer;             /**< The renderer (here forward renderer). */
-
-    QSharedPointer<Qt3DCore::QEntity>   m_XAxisEntity;                  /**< The entity representing a torus in x direction. */
-    QSharedPointer<Qt3DCore::QEntity>   m_YAxisEntity;                  /**< The entity representing a torus in y direction. */
-    QSharedPointer<Qt3DCore::QEntity>   m_ZAxisEntity;                  /**< The entity representing a torus in z direction. */
-
-    Qt3DCore::QTransform*               m_pCameraTransform;             /**< The main camera transform. */
-
-    Data3DTreeModel::SPtr               m_pData3DTreeModel;             /**< Pointer to the data3D class, which holds all 3D data. */
-
-    bool            m_bCameraTransMode;         /**< Flag for activating/deactivating the translation camera mode. */
-    bool            m_bCameraRotationMode;      /**< Flag for activating/deactivating the rotation camera mode. */
-
-    QPoint          m_mousePressPositon;        /**< Position when the mouse was pressed. */
-
-    QVector3D       m_vecCameraTrans;           /**< The camera translation vector. */
-    QVector3D       m_vecCameraTransOld;        /**< The camera old translation vector. */
-    QVector3D       m_vecCameraRotation;        /**< The camera rotation vector. */
-    QVector3D       m_vecCameraRotationOld;     /**< The camera old rotation vector. */
-
     //=========================================================================================================
     /**
     * Init the meta types
@@ -265,6 +276,7 @@ protected:
     * Window functions
     */
     void keyPressEvent(QKeyEvent* e);
+    void keyReleaseEvent(QKeyEvent* e);
     void mousePressEvent(QMouseEvent* e);
     void wheelEvent(QWheelEvent* e);
     void mouseReleaseEvent(QMouseEvent* e);
@@ -277,6 +289,30 @@ protected:
     * @param[in] parent         The parent identity which will "hold" the coordinate system.
     */
     void createCoordSystem(Qt3DCore::QEntity *parent);
+
+    Qt3DCore::QEntity*                  m_pRootEntity;                  /**< The root/most top level entity buffer. */
+    Qt3DRender::QCamera*                m_pCameraEntity;                /**< The camera entity. */
+
+    QSharedPointer<Qt3DCore::QEntity>   m_XAxisEntity;                  /**< The entity representing a torus in x direction. */
+    QSharedPointer<Qt3DCore::QEntity>   m_YAxisEntity;                  /**< The entity representing a torus in y direction. */
+    QSharedPointer<Qt3DCore::QEntity>   m_ZAxisEntity;                  /**< The entity representing a torus in z direction. */
+
+    Qt3DCore::QTransform*               m_pCameraTransform;             /**< The main camera transform. */
+
+    Data3DTreeModel::SPtr               m_pData3DTreeModel;             /**< Pointer to the data3D class, which holds all 3D data. */
+
+    bool                                m_bCameraTransMode;             /**< Flag for activating/deactivating the translation camera mode. */
+    bool                                m_bCameraRotationMode;          /**< Flag for activating/deactivating the rotation camera mode. */
+    bool                                m_bModelRotationMode;           /**< Flag for activating/deactivating the rotation model mode. */
+
+    QPoint                              m_mousePressPositon;            /**< Position when the mouse was pressed. */
+
+    QVector3D                           m_vecCameraTrans;               /**< The camera translation vector. */
+    QVector3D                           m_vecCameraTransOld;            /**< The camera old translation vector. */
+    QVector3D                           m_vecCameraRotation;            /**< The camera rotation vector. */
+    QVector3D                           m_vecCameraRotationOld;         /**< The camera old rotation vector. */
+
+    QList<QPropertyAnimation*>          m_lPropertyAnimations;          /**< The animations for each 3D object. */
 };
 
 } // NAMESPACE

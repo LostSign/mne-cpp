@@ -49,13 +49,7 @@
 // QT INCLUDES
 //=============================================================================================================
 
-#include <QSharedPointer>
-#include <QVector3D>
-
 #include <Qt3DRender/QGeometryRenderer>
-#include <Qt3DRender/QGeometry>
-#include <Qt3DRender/QAttribute>
-#include <Qt3DRender/QBuffer>
 
 
 //*************************************************************************************************************
@@ -70,6 +64,10 @@
 //=============================================================================================================
 // FORWARD DECLARATIONS
 //=============================================================================================================
+
+namespace Qt3DRender {
+    class QBuffer;
+}
 
 
 //*************************************************************************************************************
@@ -117,7 +115,7 @@ public:
     * @param[in] tVecOffset     The offset which is to be used on all the vertices.
     * @param[in] tArrayColors   The vertex colors. If empty a default value will be used.
     */
-    CustomMesh(const Eigen::MatrixX3f& tMatVert, const Eigen::MatrixX3f& tMatNorm, const Eigen::MatrixX3i& tMatTris, const Eigen::Vector3f& tVecOffset, const QByteArray& tArrayColors = QByteArray());
+    CustomMesh(const Eigen::MatrixX3f& tMatVert, const Eigen::MatrixX3f& tMatNorm, const Eigen::MatrixX3i& tMatTris, const QByteArray& tArrayColors = QByteArray());
 
     //=========================================================================================================
     /**
@@ -145,7 +143,7 @@ public:
     *
     * @return If successful returns true, false otherwise.
     */
-    bool setMeshData(const Eigen::MatrixX3f& tMatVert, const Eigen::MatrixX3f& tMatNorm, const Eigen::MatrixX3i& tMatTris, const Eigen::Vector3f& tVecOffset, const QByteArray &tArrayColors = QByteArray());
+    bool setMeshData(const Eigen::MatrixX3f& tMatVert, const Eigen::MatrixX3f& tMatNorm, const Eigen::MatrixX3i& tMatTris, const QByteArray &tArrayColors = QByteArray());
 
 protected:
     //=========================================================================================================
@@ -154,7 +152,7 @@ protected:
     *
     * @return If successful returns true, false otherwise.
     */
-    bool createCustomMesh(const Eigen::MatrixX3f& tMatVert, const Eigen::MatrixX3f& tMatNorm, const Eigen::MatrixX3i& tMatTris, const Eigen::Vector3f& tVecOffset, const QByteArray& tArrayColors = QByteArray());
+    bool createCustomMesh(const Eigen::MatrixX3f& tMatVert, const Eigen::MatrixX3f& tMatNorm, const Eigen::MatrixX3i& tMatTris, const QByteArray& tArrayColors = QByteArray());
 
     Qt3DRender::QBuffer*    m_pVertexDataBuffer;    /**< The vertex buffer. */
     Qt3DRender::QBuffer*    m_pNormalDataBuffer;    /**< The normal buffer. */

@@ -45,6 +45,14 @@
 
 //*************************************************************************************************************
 //=============================================================================================================
+// STL INCLUDES
+//=============================================================================================================
+
+#include <iostream>
+
+
+//*************************************************************************************************************
+//=============================================================================================================
 // USED NAMESPACES
 //=============================================================================================================
 
@@ -383,7 +391,7 @@ void FilterWindow::initFilters()
         FilterData tmpFilter;
         QString fileName = m_lDefaultFilters.at(i);
         fileName.append(".txt");
-        QString path = QCoreApplication::applicationDirPath() + fileName.prepend("/mne_x_libs/xDisp/default_filters/");
+        QString path = QCoreApplication::applicationDirPath() + fileName.prepend("/mne_scan_libs/scDisp/default_filters/");
 
         if(FilterIO::readFilter(path, tmpFilter))
             m_pFilterDataModel->addFilter(tmpFilter);
@@ -630,7 +638,7 @@ void FilterWindow::filterParametersChanged()
     }
 
     //set filter design method
-    FilterData::DesignMethod dMethod;
+    FilterData::DesignMethod dMethod = FilterData::Tschebyscheff;
     if(ui->m_comboBox_designMethod->currentText() == "Tschebyscheff")
         dMethod = FilterData::Tschebyscheff;
 

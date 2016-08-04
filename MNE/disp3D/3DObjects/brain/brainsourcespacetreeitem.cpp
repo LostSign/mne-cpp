@@ -39,6 +39,39 @@
 //=============================================================================================================
 
 #include "brainsourcespacetreeitem.h"
+#include "../common/metatreeitem.h"
+#include "../../helpers/renderable3Dentity.h"
+
+#include <fs/label.h>
+#include <fs/surface.h>
+
+#include <mne/mne_hemisphere.h>
+
+
+//*************************************************************************************************************
+//=============================================================================================================
+// Qt INCLUDES
+//=============================================================================================================
+
+#include <QList>
+#include <QVariant>
+#include <QStringList>
+#include <QColor>
+#include <QStandardItem>
+#include <QStandardItemModel>
+#include <QMatrix4x4>
+
+#include <Qt3DExtras/QSphereMesh>
+#include <Qt3DExtras/QPhongMaterial>
+#include <Qt3DCore/QTransform>
+
+
+//*************************************************************************************************************
+//=============================================================================================================
+// Eigen INCLUDES
+//=============================================================================================================
+
+#include <Eigen/Core>
 
 
 //*************************************************************************************************************
@@ -116,8 +149,8 @@ bool BrainSourceSpaceTreeItem::addData(const MNEHemisphere& tHemisphere, Qt3DCor
 //    RowVector3f sourcePos;
 //    QVector3D pos;
 //    Qt3DCore::QEntity* sourceSphereEntity;
-//    Qt3DRender::QSphereMesh* sourceSphere;
-//    Qt3DRender::QPhongMaterial* material;
+//    Qt3DExtras::QSphereMesh* sourceSphere;
+//    Qt3DExtras::QPhongMaterial* material;
 
 //    if(tHemisphere.isClustered()) {
 //        for(int i = 0; i < tHemisphere.cluster_info.centroidVertno.size(); i++) {
@@ -128,7 +161,7 @@ bool BrainSourceSpaceTreeItem::addData(const MNEHemisphere& tHemisphere, Qt3DCor
 
 //            sourceSphereEntity = new Qt3DCore::QEntity();
 
-//            sourceSphere = new Qt3DRender::QSphereMesh();
+//            sourceSphere = new Qt3DExtras::QSphereMesh();
 //            sourceSphere->setRadius(0.001f);
 //            sourceSphereEntity->addComponent(sourceSphere);
 
@@ -138,7 +171,7 @@ bool BrainSourceSpaceTreeItem::addData(const MNEHemisphere& tHemisphere, Qt3DCor
 //            transform->setMatrix(m);
 //            sourceSphereEntity->addComponent(transform);
 
-//            material = new Qt3DRender::QPhongMaterial();
+//            material = new Qt3DExtras::QPhongMaterial();
 //            material->setAmbient(Qt::yellow);
 //            sourceSphereEntity->addComponent(material);
 
@@ -153,7 +186,7 @@ bool BrainSourceSpaceTreeItem::addData(const MNEHemisphere& tHemisphere, Qt3DCor
 
 //            sourceSphereEntity = new Qt3DCore::QEntity();
 
-//            sourceSphere = new Qt3DRender::QSphereMesh();
+//            sourceSphere = new Qt3DExtras::QSphereMesh();
 //            sourceSphere->setRadius(0.001f);
 //            sourceSphereEntity->addComponent(sourceSphere);
 
@@ -163,7 +196,7 @@ bool BrainSourceSpaceTreeItem::addData(const MNEHemisphere& tHemisphere, Qt3DCor
 //            transform->setMatrix(m);
 //            sourceSphereEntity->addComponent(transform);
 
-//            material = new Qt3DRender::QPhongMaterial();
+//            material = new Qt3DExtras::QPhongMaterial();
 //            material->setAmbient(Qt::yellow);
 //            sourceSphereEntity->addComponent(material);
 
@@ -177,10 +210,7 @@ bool BrainSourceSpaceTreeItem::addData(const MNEHemisphere& tHemisphere, Qt3DCor
     QByteArray arrayVertColor = createVertColor(tHemisphere.rr);
 
     //Set renderable 3D entity mesh and color data
-    Vector3f offset(3);
-    offset << 0.0, 0.0, 0.0;
-
-    m_pRenderable3DEntity->setMeshData(tHemisphere.rr, tHemisphere.nn, tHemisphere.tris, offset, arrayVertColor);
+    m_pRenderable3DEntity->setMeshData(tHemisphere.rr, tHemisphere.nn, tHemisphere.tris, arrayVertColor);
 
     //Add data which is held by this BrainSourceSpaceTreeItem
     QVariant data;
@@ -196,9 +226,6 @@ bool BrainSourceSpaceTreeItem::addData(const MNEHemisphere& tHemisphere, Qt3DCor
 
     data.setValue(tHemisphere.nn);
     this->setData(data, Data3DTreeModelItemRoles::SurfaceNorm);
-
-    data.setValue(offset);
-    this->setData(data, Data3DTreeModelItemRoles::SurfaceOffset);
 
     data.setValue(m_pRenderable3DEntity);
     this->setData(data, Data3DTreeModelItemRoles::SurfaceRenderable3DEntity);

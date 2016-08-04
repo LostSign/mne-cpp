@@ -39,6 +39,29 @@
 //=============================================================================================================
 
 #include "control3dwidget.h"
+#include "disp/helpers/roundededgeswidget.h"
+#include "../3DObjects/data3Dtreedelegate.h"
+
+
+//*************************************************************************************************************
+//=============================================================================================================
+// QT INCLUDES
+//=============================================================================================================
+
+#include <QMenu>
+
+
+//*************************************************************************************************************
+//=============================================================================================================
+// Eigen INCLUDES
+//=============================================================================================================
+
+
+//*************************************************************************************************************
+//=============================================================================================================
+// QT INCLUDES
+//=============================================================================================================
+
 #include "ui_control3dwidget.h"
 
 
@@ -75,6 +98,13 @@ Control3DWidget::Control3DWidget(QWidget* parent, Qt::WindowType type)
 
     connect(ui->m_checkBox_alwaysOnTop, static_cast<void (QCheckBox::*)(bool)>(&QCheckBox::clicked),
             this, &Control3DWidget::onAlwaysOnTop);
+
+    //Connect animation and fullscreen
+    connect(ui->m_checkBox_showFullScreen, &QCheckBox::clicked,
+            this, &Control3DWidget::onShowFullScreen);
+
+    connect(ui->m_checkBox_rotate, &QCheckBox::clicked,
+            this, &Control3DWidget::onRotationClicked);
 
     //Init's
     ui->m_pushButton_sceneColorPicker->setStyleSheet(QString("background-color: rgb(0, 0, 0);"));
@@ -118,6 +148,9 @@ void Control3DWidget::setView3D(View3D::SPtr view3D)
 
     //Add the view3D to the list of connected view3D's
     m_lView3D.append(view3D);
+
+    //Set description hidden as default
+    this->onTreeViewDescriptionHide();
 }
 
 
@@ -229,3 +262,34 @@ void Control3DWidget::onAlwaysOnTop(bool state)
         this->show();
     }
 }
+
+
+//*************************************************************************************************************
+
+void Control3DWidget::onShowFullScreen(bool checked)
+{
+    //Update all connected View3D's scene colors
+    for(int i = 0; i < m_lView3D.size(); ++i) {
+        if(checked) {
+            m_lView3D.at(i)->showFullScreen();
+        } else {
+            m_lView3D.at(i)->showNormal();
+        }
+    }
+}
+
+
+//*************************************************************************************************************
+
+void Control3DWidget::onRotationClicked(bool checked)
+{
+    //Update all connected View3D's scene colors
+    for(int i = 0; i<m_lView3D.size(); i++) {
+        if(checked) {
+            m_lView3D.at(i)->startModelRotation();
+        } else {
+            m_lView3D.at(i)->stopModelRotation();
+        }
+    }
+}
+

@@ -42,17 +42,9 @@
 //=============================================================================================================
 
 #include "../../disp3D_global.h"
-
 #include "../../helpers/abstracttreeitem.h"
-#include "../../helpers/types.h"
-#include "../../rt/rtSourceLoc/rtsourcelocdataworker.h"
 
-#include "../common/metatreeitem.h"
-
-#include "fiff/fiff_types.h"
-
-#include "mne/mne_sourceestimate.h"
-#include "mne/mne_forwardsolution.h"
+#include <fiff/fiff_types.h>
 
 
 //*************************************************************************************************************
@@ -60,20 +52,22 @@
 // Qt INCLUDES
 //=============================================================================================================
 
-#include <QList>
-#include <QVariant>
-#include <QStringList>
-#include <QColor>
-#include <QStandardItem>
-#include <QStandardItemModel>
-
 
 //*************************************************************************************************************
 //=============================================================================================================
 // Eigen INCLUDES
 //=============================================================================================================
 
-#include <Eigen/Core>
+
+//*************************************************************************************************************
+//=============================================================================================================
+// FORWARD DECLARATIONS
+//=============================================================================================================
+
+namespace MNELIB {
+    class MNEForwardSolution;
+    class MNESourceEstimate;
+}
 
 
 //*************************************************************************************************************
@@ -90,6 +84,7 @@ namespace DISP3DLIB
 // FORWARD DECLARATIONS
 //=============================================================================================================
 
+class RtSourceLocDataWorker;
 
 //=============================================================================================================
 /**
@@ -131,15 +126,23 @@ public:
     /**
     * Initializes the rt data item with neccessary information for visualization computations.
     *
-    * @param[in] tForwardSolution       The MNEForwardSolution.
-    * @param[in] hemi                   The hemispehre of this brain rt data item. This information is important in order to cut out the wanted source estimations from the MNESourceEstimate
-    * @param[in] arraySurfaceVertColor  The vertex colors for the surface where the data is to be plotted on.
-    * @param[in] vecLabelIds            The label ids for each surface vertex index.
-    * @param[in] lLabels                The label list.
+    * @param[in] tForwardSolution                   The MNEForwardSolution.
+    * @param[in] arraySurfaceVertColorLeftHemi      The vertex colors for the left hemisphere surface where the data is to be plotted on.
+    * @param[in] arraySurfaceVertColorRightHemi     The vertex colors for the right hemisphere surface where the data is to be plotted on.
+    * @param[in] vecLabelIdsLeftHemi                The label ids for each left hemisphere surface vertex index.
+    * @param[in] vecLabelIdsRightHemi               The label ids for each right hemispheresurface vertex index.
+    * @param[in] lLabelsLeftHemi                    The label list for the left hemisphere.
+    * @param[in] lLabelsRightHemi                   The label list for the right hemisphere.
     *
-    * @return                           Returns true if successful.
+    * @return   Returns true if successful.
     */
-    bool init(const MNELIB::MNEForwardSolution& tForwardSolution, const QByteArray &arraySurfaceVertColor, int iHemi, const Eigen::VectorXi& vecLabelIds = FIFFLIB::defaultVectorXi, const QList<FSLIB::Label>& lLabels = QList<FSLIB::Label>());
+    bool init(const MNELIB::MNEForwardSolution& tForwardSolution,
+            const QByteArray &arraySurfaceVertColorLeftHemi,
+            const QByteArray &arraySurfaceVertColorRightHemi,
+            const Eigen::VectorXi& vecLabelIdsLeftHemi = FIFFLIB::defaultVectorXi,
+            const Eigen::VectorXi &vecLabelIdsRightHemi = FIFFLIB::defaultVectorXi,
+            const QList<FSLIB::Label> &lLabelsRightHemi = QList<FSLIB::Label>(),
+            const QList<FSLIB::Label>& lLabelsLeftHemi = QList<FSLIB::Label>());
 
     //=========================================================================================================
     /**
@@ -211,23 +214,23 @@ public:
     /**
     * This function set the normalization value.
     *
-    * @param[in] dNormalization     The new normalization value.
+    * @param[in] vecThresholds     The new threshold values used for normalizing the data.
     */
-    void setNormalization(double dNormalization);
+    void setNormalization(const QVector3D& vecThresholds);
 
-public slots:
     //=========================================================================================================
     /**
-    * This slot gets called whenever the origin of the surface vertex color (curvature, annoation, etc.) changed.
+    * This function gets called whenever the origin of the surface vertex color changed.
     *
-    * @param[in] arrayVertColor     The new vertex colors.
+    * @param[in] arrayVertColorLeftHemisphere       The new vertex colors for the left hemisphere.
+    * @param[in] arrayVertColorRightHemisphere      The new vertex colors for the right hemisphere.
     */
-    void onColorInfoOriginChanged(const QByteArray& arrayVertColor);
+    void onColorInfoOriginChanged(const QByteArray& arrayVertColorLeftHemisphere, const QByteArray& arrayVertColorRightHemisphere);
 
-private slots:
+private:
     //=========================================================================================================
     /**
-    * This slot gets called whenever the check/actiation state of the rt data worker changed.
+    * This function gets called whenever the check/actiation state of the rt data worker changed.
     *
     * @param[in] checkState     The check state of the worker.
     */
@@ -235,15 +238,15 @@ private slots:
 
     //=========================================================================================================
     /**
-    * This slot gets called whenever this item receives new color values for each estimated source.
+    * This function gets called whenever this item receives new color values for each estimated source.
     *
-    * @param[in] sourceColorSamples     The color values for each estimated source.
+    * @param[in] sourceColorSamples     The color values for each estimated source for left and right hemisphere.
     */
-    void onNewRtData(const QByteArray& sourceColorSamples);
+    void onNewRtData(const QPair<QByteArray, QByteArray> &sourceColorSamples);
 
     //=========================================================================================================
     /**
-    * This slot gets called whenever the used colormap type changed.
+    * This function gets called whenever the used colormap type changed.
     *
     * @param[in] sColormapType     The name of the new colormap type.
     */
@@ -251,7 +254,7 @@ private slots:
 
     //=========================================================================================================
     /**
-    * This slot gets called whenever the time interval in between the streamed samples changed.
+    * This function gets called whenever the time interval in between the streamed samples changed.
     *
     * @param[in] iMSec     The new time in milliseconds waited in between each streamed sample.
     */
@@ -259,15 +262,15 @@ private slots:
 
     //=========================================================================================================
     /**
-    * This slot gets called whenever the normaization value changed. The normalization value is used to normalize the estimated source activation.
+    * This function gets called whenever the normaization value changed. The normalization value is used to normalize the estimated source activation.
     *
-    * @param[in] iMSec     The new time normalization value.
+    * @param[in] vecThresholds     The new threshold values used for normalizing the data.
     */
-    void onDataNormalizationValueChanged(double dValue);
+    void onDataNormalizationValueChanged(const QVector3D& vecThresholds);
 
     //=========================================================================================================
     /**
-    * This slot gets called whenever the preferred visualization type changes (single vertex, smoothing, annotation based). This functions translates from QString to m_iVisualizationType.
+    * This function gets called whenever the preferred visualization type changes (single vertex, smoothing, annotation based). This functions translates from QString to m_iVisualizationType.
     *
     * @param[in] sVisType     The new visualization type.
     */
@@ -275,7 +278,7 @@ private slots:
 
     //=========================================================================================================
     /**
-    * This slot gets called whenever the check/actiation state of the looped streaming state changed.
+    * This function gets called whenever the check/actiation state of the looped streaming state changed.
     *
     * @param[in] checkState     The check state of the looped streaming state.
     */
@@ -283,13 +286,12 @@ private slots:
 
     //=========================================================================================================
     /**
-    * This slot gets called whenever the number of averages of the streamed samples changed.
+    * This function gets called whenever the number of averages of the streamed samples changed.
     *
     * @param[in] iNumAvr     The new number of averages.
     */
     void onNumberAveragesChanged(int iNumAvr);
 
-private:
     bool                        m_bIsInit;                      /**< The init flag. */
 
     RtSourceLocDataWorker*      m_pSourceLocRtDataWorker;       /**< The source data worker. This worker streams the rt data to this item.*/
@@ -299,9 +301,9 @@ signals:
     /**
     * Emit this signal whenever you want to provide newly generated colors from the stream rt data.
     *
-    * @param[in] sourceColorSamples     The color values for each estimated source.
+    * @param[in] sourceColorSamples     The color values for each estimated source for left and right hemisphere.
     */
-    void rtVertColorChanged(const QByteArray& sourceColorSamples);
+    void rtVertColorChanged(const QPair<QByteArray, QByteArray>& sourceColorSamples);
 };
 
 //*************************************************************************************************************

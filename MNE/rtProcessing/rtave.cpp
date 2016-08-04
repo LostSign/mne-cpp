@@ -61,7 +61,7 @@
 // USED NAMESPACES
 //=============================================================================================================
 
-using namespace RTPROCLIB;
+using namespace RTPROCESSINGLIB;
 using namespace FIFFLIB;
 using namespace UTILSLIB;
 
@@ -93,6 +93,9 @@ RtAve::RtAve(quint32 numAverages, quint32 p_iPreStimSamples, quint32 p_iPostStim
 , m_pStimEvoked(FiffEvoked::SPtr(new FiffEvoked))
 , m_iMatDataPostIdx(0)
 , m_iNumberCalcAverages(0)
+, m_iCurrentBlockSize(0)
+, m_dArtifactThreshold(300e-6)
+, m_bDoArtifactReduction(false)
 {
     qRegisterMetaType<FiffEvoked::SPtr>("FiffEvoked::SPtr");
 
@@ -323,7 +326,12 @@ void RtAve::run()
 
                 //Detect trigger
                 m_iTriggerPos = -1;
-                DetectTrigger::detectTriggerFlanksGrad(rawSegment, m_iTriggerIndex, m_iTriggerPos, 0, m_fTriggerThreshold, true, "Rising");
+                QList<QPair<int,double> > lDetectedTriggers = DetectTrigger::detectTriggerFlanksGrad(rawSegment, m_iTriggerIndex, 0, m_fTriggerThreshold, true, "Rising");
+
+                if(!lDetectedTriggers.isEmpty())
+                {
+                    m_iTriggerPos = lDetectedTriggers.at(0).first;
+                }
 
                 //If number of averages is equals zero do not perform averages
                 if(m_iNumAverages == 0) {

@@ -48,12 +48,13 @@ SUBDIRS += \
     rtClient \
     rtProcessing \
 
-contains(MNECPP_CONFIG, withGui) {
-    SUBDIRS += disp
+!contains(MNECPP_CONFIG, minimalVersion) {
+    SUBDIRS += \
+            disp \
 
-    qtHaveModule(3dcore,3drender,3dinput) {
-        message(MNE.pro - Qt3D available)
+    qtHaveModule(charts) {
         SUBDIRS += \
+            dispCharts \
             disp3D \
     }
 }

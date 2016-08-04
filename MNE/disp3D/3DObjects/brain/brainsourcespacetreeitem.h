@@ -42,17 +42,8 @@
 //=============================================================================================================
 
 #include "../../disp3D_global.h"
-
 #include "../../helpers/abstracttreeitem.h"
-#include "../common/metatreeitem.h"
-
 #include "../../helpers/types.h"
-#include "../../helpers/renderable3Dentity.h"
-
-#include "fs/label.h"
-#include "fs/surface.h"
-
-#include "mne/mne_hemisphere.h"
 
 
 //*************************************************************************************************************
@@ -60,23 +51,25 @@
 // Qt INCLUDES
 //=============================================================================================================
 
-#include <QList>
-#include <QVariant>
-#include <QStringList>
-#include <QColor>
-#include <QStandardItem>
-#include <QStandardItemModel>
-
-#include <Qt3DRender/QSphereMesh>
-#include <Qt3DRender/QPhongMaterial>
-
 
 //*************************************************************************************************************
 //=============================================================================================================
 // Eigen INCLUDES
 //=============================================================================================================
 
-#include <Eigen/Core>
+
+//*************************************************************************************************************
+//=============================================================================================================
+// FORWARD DECLARATIONS
+//=============================================================================================================
+
+namespace MNELIB {
+    class MNEHemisphere;
+}
+
+namespace Qt3DCore {
+    class QEntity;
+}
 
 
 //*************************************************************************************************************
@@ -91,6 +84,8 @@ namespace DISP3DLIB
 //=============================================================================================================
 // FORWARD DECLARATIONS
 //=============================================================================================================
+
+class Renderable3DEntity;
 
 
 //=============================================================================================================
@@ -142,16 +137,16 @@ public:
 
     //=========================================================================================================
     /**
-    * Call this slot whenever you want to change the visibilty of the 3D rendered content.
+    * Call this function whenever you want to change the visibilty of the 3D rendered content.
     *
     * @param[in] state     The visiblity flag.
     */
     void setVisible(bool state);
 
-private slots:
+private:
     //=========================================================================================================
     /**
-    * Call this slot whenever the surface color was changed.
+    * Call this function whenever the surface color was changed.
     *
     * @param[in] color        The new surface color.
     */
@@ -159,13 +154,12 @@ private slots:
 
     //=========================================================================================================
     /**
-    * Call this slot whenever the check box of this item was checked.
+    * Call this function whenever the check box of this item was checked.
     *
     * @param[in] checkState        The current checkstate.
     */
     virtual void onCheckStateChanged(const Qt::CheckState& checkState);
 
-private:
     //=========================================================================================================
     /**
     * Creates a QByteArray of colors for given color for the input vertices.

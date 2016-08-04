@@ -41,6 +41,7 @@
 
 #include <disp3D/view3D.h>
 #include <disp3D/control/control3dwidget.h>
+#include <disp3D/3DObjects/brain/brainrtsourcelocdatatreeitem.h>
 
 #include <fs/label.h>
 #include <fs/surfaceset.h>
@@ -48,6 +49,7 @@
 
 #include <fiff/fiff_evoked.h>
 #include <fiff/fiff.h>
+#include <fiff/fiff_dig_point_set.h>
 #include <mne/mne.h>
 
 #include <mne/mne_epoch_data_list.h>
@@ -106,12 +108,12 @@ int main(int argc, char *argv[])
     QCommandLineParser parser;
     parser.setApplicationDescription("Start disp3D tutorial");
     parser.addHelpOption();
-    QCommandLineOption sampleSurfOption("surfType", "Surface type <type>.", "type", "pial");
+    QCommandLineOption sampleSurfOption("surfType", "Surface type <type>.", "type", "inflated");
     QCommandLineOption sampleAnnotOption("annotType", "Annotation type <type>.", "type", "aparc.a2009s");
     QCommandLineOption sampleHemiOption("hemi", "Selected hemisphere <hemi>.", "hemi", "2");
     QCommandLineOption sampleSubjectOption("subject", "Selected subject <subject>.", "subject", "sample");
     QCommandLineOption sampleSubjectPathOption("subjectPath", "Selected subject path <subjectPath>.", "subjectPath", "./MNE-sample-data/subjects");
-    QCommandLineOption sampleSourceLocOption("doSourceLoc", "Do real time source localization <doSourceLoc>.", "doSourceLoc", "true");
+    QCommandLineOption sampleSourceLocOption("doSourceLoc", "Do real time source localization <doSourceLoc>.", "doSourceLoc", "false");
     QCommandLineOption sampleFwdOption("fwd", "Path to forwad solution <file>.", "file", "./MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif");
     QCommandLineOption sampleInvOpOption("invOp", "Path to inverse operator <file>.", "file", "");
     QCommandLineOption sampleClustOption("doClust", "Path to clustered inverse operator <doClust>.", "doClust", "true");
@@ -143,13 +145,16 @@ int main(int argc, char *argv[])
     QFile t_fileCov("./MNE-sample-data/MEG/sample/sample_audvis-cov.fif");
     QFile t_fileEvoked("./MNE-sample-data/MEG/sample/sample_audvis-ave.fif");
 
-    MNESourceEstimate sourceEstimate;
-
     //########################################################################################
     //
     // Source Estimate START
     //
     //########################################################################################
+
+    MNESourceEstimate sourceEstimate_LA;
+    MNESourceEstimate sourceEstimate_RA;
+    MNESourceEstimate sourceEstimate_LV;
+    MNESourceEstimate sourceEstimate_RV;
 
     if(bAddRtSourceLoc) {
         double snr = 3.0;
@@ -157,13 +162,23 @@ int main(int argc, char *argv[])
         QString method("dSPM"); //"MNE" | "dSPM" | "sLORETA"
 
         // Load data
-        fiff_int_t setno = 3;
         QPair<QVariant, QVariant> baseline(QVariant(), 0);
-        FiffEvoked evoked(t_fileEvoked, setno, baseline);
-        if(evoked.isEmpty())
+        FiffEvoked evoked_LA(t_fileEvoked, 0, baseline);
+        t_fileEvoked.close();
+        FiffEvoked evoked_RA(t_fileEvoked, 1, baseline);
+        t_fileEvoked.close();
+        FiffEvoked evoked_LV(t_fileEvoked, 2, baseline);
+        t_fileEvoked.close();
+        FiffEvoked evoked_RV(t_fileEvoked, 3, baseline);
+        t_fileEvoked.close();
+        if(evoked_LA.isEmpty() || evoked_RA.isEmpty() ||evoked_LV.isEmpty() || evoked_RV.isEmpty())
             return 1;
 
-        std::cout << "Evoked description: " << evoked.comment.toLatin1().constData() << std::endl;
+        std::cout << std::endl;
+        std::cout << "Evoked description: " << evoked_LA.comment.toLatin1().constData() << std::endl;
+        std::cout << "Evoked description: " << evoked_RA.comment.toLatin1().constData() << std::endl;
+        std::cout << "Evoked description: " << evoked_LV.comment.toLatin1().constData() << std::endl;
+        std::cout << "Evoked description: " << evoked_RV.comment.toLatin1().constData() << std::endl;
 
         if(t_Fwd.isEmpty())
             return 1;
@@ -171,7 +186,7 @@ int main(int argc, char *argv[])
         FiffCov noise_cov(t_fileCov);
 
         // regularize noise covariance
-        noise_cov = noise_cov.regularize(evoked.info, 0.05, 0.05, 0.1, true);
+        noise_cov = noise_cov.regularize(evoked_LA.info, 0.05, 0.05, 0.1, true);
 
         //
         // Cluster forward solution;
@@ -185,7 +200,7 @@ int main(int argc, char *argv[])
         //
         // make an inverse operators
         //
-        FiffInfo info = evoked.info;
+        FiffInfo info = evoked_LA.info;
 
         MNEInverseOperator inverse_operator(info, t_clusteredFwd, noise_cov, 0.2f, 0.8f);
 
@@ -199,17 +214,20 @@ int main(int argc, char *argv[])
         // Compute inverse solution
         //
         MinimumNorm minimumNorm(inverse_operator, lambda2, method);
-        sourceEstimate = minimumNorm.calculateInverse(evoked);
+        sourceEstimate_LA = minimumNorm.calculateInverse(evoked_LA);
+        sourceEstimate_RA = minimumNorm.calculateInverse(evoked_RA);
+        sourceEstimate_LV = minimumNorm.calculateInverse(evoked_LV);
+        sourceEstimate_RV = minimumNorm.calculateInverse(evoked_RV);
 
-        if(sourceEstimate.isEmpty())
+        if(sourceEstimate_LA.isEmpty() || sourceEstimate_RA.isEmpty() ||sourceEstimate_LV.isEmpty() || sourceEstimate_RV.isEmpty())
             return 1;
 
         // View activation time-series
-        std::cout << "\nsourceEstimate:\n" << sourceEstimate.data.block(0,0,10,10) << std::endl;
-        std::cout << "time\n" << sourceEstimate.times.block(0,0,1,10) << std::endl;
-        std::cout << "timeMin\n" << sourceEstimate.times[0] << std::endl;
-        std::cout << "timeMax\n" << sourceEstimate.times[sourceEstimate.times.size()-1] << std::endl;
-        std::cout << "time step\n" << sourceEstimate.tstep << std::endl;
+        std::cout << "\nsourceEstimate:\n" << sourceEstimate_LA.data.block(0,0,10,10) << std::endl;
+        std::cout << "time\n" << sourceEstimate_LA.times.block(0,0,1,10) << std::endl;
+        std::cout << "timeMin\n" << sourceEstimate_LA.times[0] << std::endl;
+        std::cout << "timeMax\n" << sourceEstimate_LA.times[sourceEstimate_LA.times.size()-1] << std::endl;
+        std::cout << "time step\n" << sourceEstimate_LA.tstep << std::endl;
     }
 
     //########################################################################################
@@ -234,39 +252,71 @@ int main(int argc, char *argv[])
     View3D::SPtr testWindow = View3D::SPtr(new View3D());
 //    testWindow->addBrainData("Subject01", "HemiLRSet", tSurfLeft, tAnnotLeft);
 //    testWindow->addBrainData("Subject01", "HemiLRSet", tSurfRight, tAnnotRight);
-    testWindow->addBrainData("Subject01", "HemiLRSet", tSurfSet, tAnnotSet);
+//    testWindow->addBrainData("Subject01", "Surface", tSurfSet, tAnnotSet);
+    testWindow->addBrainData("Subject01", "Right Auditory", tSurfSet, tAnnotSet);
+    testWindow->addBrainData("Subject01", "Right Visual", tSurfSet, tAnnotSet);
+    testWindow->addBrainData("Subject01", "Left Auditory", tSurfSet, tAnnotSet);
+    testWindow->addBrainData("Subject01", "Left Visual", tSurfSet, tAnnotSet);
 
-    //Read & show BEM
-    QFile t_fileBem("./MNE-sample-data/subjects/sample/bem/sample-5120-5120-5120-bem.fif");
-    MNEBem t_Bem(t_fileBem);
+    //Read & show BEM and sensor surfaces
+//    QFile t_fileBem("./MNE-sample-data/subjects/sample/bem/sample-5120-5120-5120-bem.fif");
+//    MNEBem t_Bem(t_fileBem);
+//    QFile t_fileBem2("./MNE-sample-data/subjects/sample/bem/sample-head.fif");
+//    MNEBem t_Bem2(t_fileBem2);
+//    QFile t_filesensorSurfaceVV("./resources/sensorSurfaces/306m_rt.fif");
+//    MNEBem t_sensorSurfaceVV(t_filesensorSurfaceVV);
+//    QFile t_filesensorSurfaceBM("./resources/sensorSurfaces/BabyMEG.fif");
+//    MNEBem t_sensorSurfaceBM(t_filesensorSurfaceBM);
 
-    QFile t_fileBem2("./MNE-sample-data/subjects/sample/bem/sample-head.fif");
-    MNEBem t_Bem2(t_fileBem2);
-    testWindow->addBemData("Subject01", "BEM", t_Bem2);
+//    testWindow->addBemData("Subject01", "BEM", t_Bem);
+//    testWindow->addBemData("Subject01", "BEM", t_Bem2);
+//    testWindow->addBemData("Sensors", "VectorView", t_sensorSurfaceVV);
+//    testWindow->addBemData("Sensors", "BabyMEG", t_sensorSurfaceBM);
 
-    testWindow->addBemData("Subject01", "BEM", t_Bem);
+    //
+    // Read & show digitizer points
+    //
+
+    QFile t_fileDig("./MNE-sample-data/MEG/sample/sample_audvis-ave.fif");
+    FiffDigPointSet t_Dig(t_fileDig);
+    testWindow->addDigitizerData("Subject01", "Left Auditory", t_Dig);
 
     if(bAddRtSourceLoc) {
-        QList<BrainRTSourceLocDataTreeItem*> rtItemList = testWindow->addRtBrainData("Subject01", "HemiLRSet", sourceEstimate, t_clusteredFwd);
-
         //testWindow->addBrainData("Subject01", "HemiLRSet", t_clusteredFwd);
 
         //testWindow->addRtBrainData("Subject01", "HemiLRSet", sourceEstimate);
         //rtItemList.at(0)->addData(sourceEstimate);
 
+        //RA
+        QList<BrainRTSourceLocDataTreeItem*> rtItemList_LA = testWindow->addRtBrainData("Subject01", "Left Auditory", sourceEstimate_LA, t_clusteredFwd);
+        QList<BrainRTSourceLocDataTreeItem*> rtItemList_RA = testWindow->addRtBrainData("Subject01", "Right Auditory", sourceEstimate_RA, t_clusteredFwd);
+        QList<BrainRTSourceLocDataTreeItem*> rtItemList_LV = testWindow->addRtBrainData("Subject01", "Left Visual", sourceEstimate_LV, t_clusteredFwd);
+        QList<BrainRTSourceLocDataTreeItem*> rtItemList_RV = testWindow->addRtBrainData("Subject01", "Right Visual", sourceEstimate_RV, t_clusteredFwd);
+
+//        //Init some rt related values
+//        for(int i = 0; i < rtItemList_RA.size(); ++i) {
+//            rtItemList_RA.at(i)->setLoopState(true);
+//            rtItemList_RA.at(i)->setTimeInterval(50);
+//            rtItemList_RA.at(i)->setNumberAverages(1);
+//            rtItemList_RA.at(i)->setStreamingActive(true);
+//            rtItemList_RA.at(i)->setNormalization(QVector3D(5.0,0.5,15));
+//            rtItemList_RA.at(i)->setVisualizationType("Annotation based");
+//            rtItemList_RA.at(i)->setColortable("Hot");
+//        }
+
         //Init some rt related values
-        for(int i = 0; i < rtItemList.size(); ++i) {
-            rtItemList.at(i)->setLoopState(true);
-            rtItemList.at(i)->setTimeInterval(10);
-            rtItemList.at(i)->setNumberAverages(1);
-            rtItemList.at(i)->setStreamingActive(true);
-            rtItemList.at(i)->setNormalization(1.0);
-            rtItemList.at(i)->setVisualizationType("Annotation based");
-            rtItemList.at(i)->setColortable("Hot Negative 2");
+        for(int i = 0; i < rtItemList_RV.size(); ++i) {
+            rtItemList_RV.at(i)->setLoopState(true);
+            rtItemList_RV.at(i)->setTimeInterval(50);
+            rtItemList_RV.at(i)->setNumberAverages(1);
+            rtItemList_RV.at(i)->setStreamingActive(true);
+            rtItemList_RV.at(i)->setNormalization(QVector3D(5.0,5.5,15));
+            rtItemList_RV.at(i)->setVisualizationType("Vertex based");
+            rtItemList_RV.at(i)->setColortable("Hot Negative 1");
         }
     }
 
-    testWindow->show();    
+    testWindow->show();
 
     Control3DWidget::SPtr control3DWidget = Control3DWidget::SPtr(new Control3DWidget());
     control3DWidget->setView3D(testWindow);

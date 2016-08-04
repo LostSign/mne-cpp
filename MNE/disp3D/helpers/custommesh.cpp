@@ -43,6 +43,25 @@
 
 //*************************************************************************************************************
 //=============================================================================================================
+// QT INCLUDES
+//=============================================================================================================
+
+#include <QSharedPointer>
+#include <QVector3D>
+
+#include <Qt3DRender/QGeometry>
+#include <Qt3DRender/QAttribute>
+#include <Qt3DRender/QBuffer>
+
+
+//*************************************************************************************************************
+//=============================================================================================================
+// Eigen INCLUDES
+//=============================================================================================================
+
+
+//*************************************************************************************************************
+//=============================================================================================================
 // USED NAMESPACES
 //=============================================================================================================
 
@@ -70,11 +89,11 @@ CustomMesh::CustomMesh()
 
 //*************************************************************************************************************
 
-CustomMesh::CustomMesh(const MatrixX3f& tMatVert, const MatrixX3f& tMatNorm, const MatrixX3i& tMatTris, const Vector3f& tVecOffset, const QByteArray& tArrayColors)
+CustomMesh::CustomMesh(const MatrixX3f& tMatVert, const MatrixX3f& tMatNorm, const MatrixX3i& tMatTris, const QByteArray& tArrayColors)
 : Qt3DRender::QGeometryRenderer()
 , m_iNumVert(tMatVert.rows())
 {
-    this->createCustomMesh(tMatVert, tMatNorm, tMatTris, tVecOffset, tArrayColors);
+    this->createCustomMesh(tMatVert, tMatNorm, tMatTris, tArrayColors);
 }
 
 
@@ -104,16 +123,16 @@ bool CustomMesh::setVertColor(const QByteArray& tArrayColors)
 
 //*************************************************************************************************************
 
-bool CustomMesh::setMeshData(const MatrixX3f& tMatVert, const MatrixX3f& tMatNorm, const MatrixX3i& tMatTris, const Vector3f& tVecOffset, const QByteArray& tArrayColors)
+bool CustomMesh::setMeshData(const MatrixX3f& tMatVert, const MatrixX3f& tMatNorm, const MatrixX3i& tMatTris, const QByteArray& tArrayColors)
 {
     m_iNumVert = tMatVert.rows();
 
-    return createCustomMesh(tMatVert, tMatNorm, tMatTris, tVecOffset, tArrayColors);
+    return createCustomMesh(tMatVert, tMatNorm, tMatTris, tArrayColors);
 }
 
 //*************************************************************************************************************
 
-bool CustomMesh::createCustomMesh(const MatrixX3f& tMatVert, const MatrixX3f& tMatNorm, const MatrixX3i& tMatTris, const Vector3f& tVecOffset, const QByteArray& tArrayColors)
+bool CustomMesh::createCustomMesh(const MatrixX3f& tMatVert, const MatrixX3f& tMatNorm, const MatrixX3i& tMatTris, const QByteArray& tArrayColors)
 {
     Qt3DRender::QGeometry* customGeometry = new Qt3DRender::QGeometry(this);
 
@@ -141,9 +160,9 @@ bool CustomMesh::createCustomMesh(const MatrixX3f& tMatVert, const MatrixX3f& tM
 
     for(int i = 0; i<tMatVert.rows(); i++) {
         //Vertex
-        rawVertexArray[idxVert++] = (tMatVert(i,0) + tVecOffset(0));
-        rawVertexArray[idxVert++] = (tMatVert(i,1) + tVecOffset(1));
-        rawVertexArray[idxVert++] = (tMatVert(i,2) + tVecOffset(2));
+        rawVertexArray[idxVert++] = (tMatVert(i,0));
+        rawVertexArray[idxVert++] = (tMatVert(i,1));
+        rawVertexArray[idxVert++] = (tMatVert(i,2));
 
         //Normal
         rawNormalArray[idxNorm++] = tMatNorm(i,0);
@@ -156,9 +175,12 @@ bool CustomMesh::createCustomMesh(const MatrixX3f& tMatVert, const MatrixX3f& tM
             rawColorArray[idxColor++] = 0.2f;
             rawColorArray[idxColor++] = 0.2f;
         } else {
-            rawColorArray[idxColor++] = tArrayColors[idxColor];
-            rawColorArray[idxColor++] = tArrayColors[idxColor];
-            rawColorArray[idxColor++] = tArrayColors[idxColor];
+            idxColor++;
+            rawColorArray[idxColor] = tArrayColors[idxColor];
+            idxColor++;
+            rawColorArray[idxColor] = tArrayColors[idxColor];
+            idxColor++;
+            rawColorArray[idxColor] = tArrayColors[idxColor];
         }
     }
 
@@ -227,11 +249,13 @@ bool CustomMesh::createCustomMesh(const MatrixX3f& tMatVert, const MatrixX3f& tM
     customGeometry->addAttribute(indexAttribute);
 
     this->setInstanceCount(1);
-    this->setBaseVertex(0);
-    this->setBaseInstance(0);
+    this->setIndexOffset(0);
+    //this->setFirstVertex(0);
+    this->setFirstInstance(0);
     this->setPrimitiveType(Qt3DRender::QGeometryRenderer::Triangles);
     this->setGeometry(customGeometry);
 
-    this->setPrimitiveCount(tMatTris.rows()*3);
+    this->setVertexCount(tMatTris.rows()*3);
+
     return true;
 }
