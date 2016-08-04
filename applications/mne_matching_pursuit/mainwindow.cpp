@@ -424,7 +424,7 @@ void MainWindow::open_file()
     ui->lb_figure_of_merit->setHidden(true);
     callXAxisWindow->setMinimumHeight(22);
     callXAxisWindow->setMaximumHeight(22);
-    ui->actionTFplot->setEnabled(false);
+    ui->actionTFplot->setEnabled(true);
 
 
     _atom_sum_matrix = MatrixXd::Zero(_signal_matrix.rows(), _signal_matrix.cols()); //resize
@@ -3413,7 +3413,12 @@ void MainWindow::on_actionTFplot_triggered()
     loadLayout(QCoreApplication::applicationDirPath() + selectionName.prepend("/Resources/2DLayouts/"));
 
     Tpplot tplot;
-    tplot.createMapGrid(_signal_matrix, pick_info.ch_names, m_layoutMap);
+    MatrixXd topo = tplot.createMapGrid(_signal_matrix, pick_info.ch_names, m_layoutMap, QSize(256, 256));
+
+    TFplot *tfplot = new TFplot(topo, _sample_rate, Jet);
+    ui->tabWidget->addTab(tfplot, "Topoplot");
+    ui->tabWidget->setCurrentIndex(2);
+    tfplot->resize(ui->tabWidget->size());
 
     /*
     if(ui->tabWidget->count() == 1)

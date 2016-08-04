@@ -54,28 +54,44 @@ Tpplot::Tpplot()
 
 }
 
-void Tpplot::createMapGrid(MatrixXd signal, QStringList chn_names , QMap<QString,QPointF> layoutMap)
+MatrixXd Tpplot::createMapGrid(MatrixXd signal, QStringList chn_names , QMap<QString,QPointF> layoutMap, QSize topo_matrix_size)
 {
-    qint32 minXCoor = std::numeric_limits<int>::max();
-    qint32 maxXCoor = std::numeric_limits<int>::min();
-    qint32 minYCoor = std::numeric_limits<int>::max();
-    qint32 maxYCoor = std::numeric_limits<int>::min();
-    MatrixXd tp_map =  MatrixXd::Zero(64, 64);
+    qreal minXCoor = std::numeric_limits<int>::max();
+    qreal maxXCoor = std::numeric_limits<int>::min();
+    qreal minYCoor = std::numeric_limits<int>::max();
+    qreal maxYCoor = std::numeric_limits<int>::min();
+    qreal factorXCoor = 0;
+    qreal factorYCoor = 0;
+    MatrixXd tp_map =  MatrixXd::Zero(topo_matrix_size.height(), topo_matrix_size.width());
     QMapIterator<QString, QPointF> coor(layoutMap);
-
-
 
     while (coor.hasNext())
     {
-        channel.next();
+        coor.next();
         if(coor.value().x() < minXCoor)
             minXCoor = coor.value().x();
-        if(coor.value().x > maxXCoor)
+        if(coor.value().x() > maxXCoor)
             maxXCoor = coor.value().x();
         if(coor.value().y() < minYCoor)
             minYCoor = coor.value().y();
-        if(coor.value().y > maxYCoor)
+        if(coor.value().y() > maxYCoor)
             maxYCoor = coor.value().y();
     }
+    coor.toFront();
 
+    factorXCoor = (maxXCoor - minXCoor) / topo_matrix_size.width();
+    factorYCoor = (maxYCoor - minYCoor) / topo_matrix_size.height();
+
+
+    qint32 index = 0;
+    while (coor.hasNext())
+    {
+        coor.next();
+        layoutMap[chn_names.at(index)] = QPointF(((coor.value().x()) - minXCoor) / factorXCoor, ((coor.value().y() - minYCoor)) / factorYCoor);
+        if(round(layoutMap[chn_names.at(index)].x()) < topo_matrix_size.width() && round(layoutMap[chn_names.at(index)].y()) < topo_matrix_size.height())
+            tp_map(round(layoutMap[chn_names.at(index)].x()), round(layoutMap[chn_names.at(index)].y())) = 1;//signal(0, index);
+        index++;
+    }
+
+    return  tp_map;
 }
