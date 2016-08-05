@@ -423,8 +423,8 @@ void MainWindow::open_file()
     ui->tbv_Results->setRowCount(0);
     ui->lb_figure_of_merit->setHidden(true);
     callXAxisWindow->setMinimumHeight(22);
-    callXAxisWindow->setMaximumHeight(22);
-    ui->actionTFplot->setEnabled(false);
+    callXAxisWindow->setMaximumHeight(22);    
+    ui->actionTFplot->setEnabled(true);
 
 
     _atom_sum_matrix = MatrixXd::Zero(_signal_matrix.rows(), _signal_matrix.cols()); //resize
@@ -1946,8 +1946,7 @@ void MainWindow::calc_thread_finished()
     ui->cb_all_select->setEnabled(true);
     ui->dsb_from->setEnabled(true);
     ui->dsb_to->setEnabled(true);    
-    ui->sb_sample_count ->setEnabled(true);
-    ui->actionTFplot->setEnabled(true);
+    ui->sb_sample_count ->setEnabled(true);    
 
     QList<qint32> sizes = ui->splitter->sizes();
     sizes.insert(0, max_tbv_header_width + 100);
