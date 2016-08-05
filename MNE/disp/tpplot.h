@@ -80,7 +80,7 @@ class DISPSHARED_EXPORT Tpplot
 public:
     Tpplot();
 
-    void createMapGrid(MatrixXd signal, QStringList chn_names , QMap<QString,QPointF> layoutMap);
+    MatrixXd createMapGrid(MatrixXd signal, QStringList chn_names , QMap<QString,QPointF> layoutMap, QSize topo_matrix_size);
 };
 
 }

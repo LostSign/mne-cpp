@@ -1946,7 +1946,6 @@ void MainWindow::calc_thread_finished()
     ui->cb_all_select->setEnabled(true);
     ui->dsb_from->setEnabled(true);
     ui->dsb_to->setEnabled(true);    
-    ui->sb_sample_count ->setEnabled(true);    
 
     QList<qint32> sizes = ui->splitter->sizes();
     sizes.insert(0, max_tbv_header_width + 100);
@@ -3412,7 +3411,12 @@ void MainWindow::on_actionTFplot_triggered()
     loadLayout(QCoreApplication::applicationDirPath() + selectionName.prepend("/Resources/2DLayouts/"));
 
     Tpplot tplot;
-    tplot.createMapGrid(_signal_matrix, pick_info.ch_names, m_layoutMap);
+    MatrixXd topo = tplot.createMapGrid(_signal_matrix, pick_info.ch_names, m_layoutMap, QSize(256, 256));
+
+    TFplot *tfplot = new TFplot(topo, _sample_rate, Jet);
+    ui->tabWidget->addTab(tfplot, "Topoplot");
+    ui->tabWidget->setCurrentIndex(2);
+    tfplot->resize(ui->tabWidget->size());
 
     /*
     if(ui->tabWidget->count() == 1)
