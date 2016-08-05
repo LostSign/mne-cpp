@@ -65,8 +65,6 @@ TFplot::TFplot(MatrixXd tf_matrix, qreal sample_rate, qreal lower_frq, qreal upp
     qint32 upper_px = floor(upper_frq / frq_per_px);
 
     MatrixXd zoomed_tf_matrix = MatrixXd::Zero(upper_px-lower_px, tf_matrix.cols());
-    //How to print to console here
-    //printf(("fff   "+QString::number(zoomed_tf_matrix(12,12))).toLatin1().data());// << ";  " << zoomed_tf_matrix.rows(2) << ";   ";
 
     qint32 pxls = 0;
     for(qint32 it = lower_px; it < upper_px; it++)
@@ -130,11 +128,9 @@ void TFplot::calc_plot(MatrixXd tf_matrix, qreal sample_rate, ColorMaps cmap, qr
             image_to_tf_plot->setPixel(x, tf_matrix.rows() - 1 -  y,  color.rgb());
         }
 
-    //*image_to_tf_plot = image_to_tf_plot->scaled(tf_matrix.cols(), tf_matrix.cols()/2, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     *image_to_tf_plot = image_to_tf_plot->scaledToWidth(/*0.9 **/ 1026, Qt::SmoothTransformation);
     //image to pixmap
     QGraphicsPixmapItem *tf_pixmap = new QGraphicsPixmapItem(QPixmap::fromImage(*image_to_tf_plot));
-    //tf_pixmap->setScale(100);
     QGraphicsScene *tf_scene = new QGraphicsScene();
     tf_scene->addItem(tf_pixmap);
 
@@ -169,7 +165,6 @@ void TFplot::calc_plot(MatrixXd tf_matrix, qreal sample_rate, ColorMaps cmap, qr
         }
     }
 
-    //*coeffs_image = coeffs_image->scaled(10, tf_matrix.cols()/2, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     *coeffs_image = coeffs_image->scaledToHeight(image_to_tf_plot->height(), Qt::SmoothTransformation);
 
     QLayout * layout = new QGridLayout();

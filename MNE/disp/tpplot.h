@@ -72,15 +72,14 @@ namespace DISPLIB
 
 using namespace Eigen;
 
-
-
-
 class DISPSHARED_EXPORT Tpplot
 {
 public:
     Tpplot();
 
-    MatrixXd createMapGrid(MatrixXd signal, QStringList chn_names , QMap<QString,QPointF> layoutMap, QSize topo_matrix_size);
+    QMap<QString,QPointF> createMapGrid(QMap<QString,QPointF> layoutMap, QSize topo_matrix_size);
+    MatrixXd normSignal(MatrixXd signalMatrix);
+    MatrixXd createTopoMatrix(MatrixXd normSignal, QMap<QString, QPointF> mapGrid, QSize topo_matrix_size, qreal timeSample);
 };
 
 }

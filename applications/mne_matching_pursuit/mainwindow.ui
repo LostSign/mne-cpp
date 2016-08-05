@@ -963,6 +963,84 @@ QTabBar::tab:only-one {
             </item>
            </layout>
           </widget>
+          <widget class="QWidget" name="tab_topo_plot">
+           <attribute name="title">
+            <string>Topoplot</string>
+           </attribute>
+           <layout class="QGridLayout" name="gridLayout_3">
+            <item row="2" column="1">
+             <widget class="QPushButton" name="btt_playtopo">
+              <property name="styleSheet">
+               <string notr="true">background-color: qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 white,  stop:1 grey);
+border-style: solid;
+border-width: 2px;
+border-color: black;
+border-radius: 25px;
+border-style: solid;
+border-width:1px;
+
+max-width:50px;
+max-height:50px;
+min-width:50px;
+min-height:50px;</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset resource="Ressourcen.qrc">
+                <normaloff>:/images/icons/play_button.png</normaloff>:/images/icons/play_button.png</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>48</width>
+                <height>48</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="2" column="2">
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="0" column="0" colspan="3">
+             <layout class="QVBoxLayout" name="l_topoplot">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+             </layout>
+            </item>
+            <item row="1" column="0" colspan="3">
+             <widget class="QSlider" name="sli_topoTime">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
          </widget>
         </widget>
        </item>

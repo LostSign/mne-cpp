@@ -32,5 +32,6 @@
         <file>icons/lupe.png</file>
         <file>icons/expand_512.png</file>
         <file>icons/tf_symbol.png</file>
+        <file>icons/play_button.png</file>
     </qresource>
 </RCC>

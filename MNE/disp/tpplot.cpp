@@ -49,22 +49,19 @@
 
 using namespace DISPLIB;
 
-Tpplot::Tpplot()
-{
+Tpplot::Tpplot() {}
 
-}
-
-MatrixXd Tpplot::createMapGrid(MatrixXd signal, QStringList chn_names , QMap<QString,QPointF> layoutMap, QSize topo_matrix_size)
-{
+QMap<QString,QPointF> Tpplot::createMapGrid(QMap<QString,QPointF> layoutMap, QSize topo_matrix_size)
+{    
     qreal minXCoor = std::numeric_limits<int>::max();
     qreal maxXCoor = std::numeric_limits<int>::min();
     qreal minYCoor = std::numeric_limits<int>::max();
     qreal maxYCoor = std::numeric_limits<int>::min();
     qreal factorXCoor = 0;
     qreal factorYCoor = 0;
-    MatrixXd tp_map =  MatrixXd::Zero(topo_matrix_size.height(), topo_matrix_size.width());
     QMapIterator<QString, QPointF> coor(layoutMap);
 
+    // find min and max values
     while (coor.hasNext())
     {
         coor.next();
@@ -77,21 +74,85 @@ MatrixXd Tpplot::createMapGrid(MatrixXd signal, QStringList chn_names , QMap<QSt
         if(coor.value().y() > maxYCoor)
             maxYCoor = coor.value().y();
     }
+
+    // 2px at the left edge
+    minXCoor -= 2;
+    minYCoor -= 2;
+                                                                // 2px at the right edge
+    factorXCoor = (maxXCoor - minXCoor) / (qreal)(topo_matrix_size.width() - 2);
+    factorYCoor = (maxYCoor - minYCoor) / (qreal)(topo_matrix_size.height() - 2);
+
+    // reset iterator
     coor.toFront();
-
-    factorXCoor = (maxXCoor - minXCoor) / topo_matrix_size.width();
-    factorYCoor = (maxYCoor - minYCoor) / topo_matrix_size.height();
-
-
-    qint32 index = 0;
     while (coor.hasNext())
     {
         coor.next();
-        layoutMap[chn_names.at(index)] = QPointF(((coor.value().x()) - minXCoor) / factorXCoor, ((coor.value().y() - minYCoor)) / factorYCoor);
-        if(round(layoutMap[chn_names.at(index)].x()) < topo_matrix_size.width() && round(layoutMap[chn_names.at(index)].y()) < topo_matrix_size.height())
-            tp_map(round(layoutMap[chn_names.at(index)].x()), round(layoutMap[chn_names.at(index)].y())) = 1;//signal(0, index);
-        index++;
-    }
+        layoutMap[coor.key()] = QPointF(round((coor.value().x() - minXCoor) / factorXCoor), round((coor.value().y() - minYCoor) / factorYCoor));
 
-    return  tp_map;
+        // just safty :)
+        if(layoutMap[coor.key()].x() >= topo_matrix_size.width())
+            layoutMap[coor.key()].setX(topo_matrix_size.width() - 1);
+        if(layoutMap[coor.key()].y() >= topo_matrix_size.height())
+            layoutMap[coor.key()].setY(topo_matrix_size.height() - 1);
+        if(layoutMap[coor.key()].x() < 0)
+            layoutMap[coor.key()].setX(0);
+        if(layoutMap[coor.key()].y() < 0)
+            layoutMap[coor.key()].setY(0);
+    }
+    return  layoutMap;
 }
+
+MatrixXd Tpplot::normSignal(MatrixXd signalMatrix)
+{
+    //normalisation foreach channel
+    for(qint32 chnI = 0; chnI < signalMatrix.cols(); chnI++)   // over all Channels
+    {
+        VectorXd channel = signalMatrix.col(chnI);
+
+        qreal max = channel.maxCoeff();
+        qreal min = channel.minCoeff();
+        for(qint32 i = 0; i < channel.rows(); i++)
+            channel(i) -= min;
+        channel /= ((max - min) / 1.0);
+        signalMatrix.col(chnI) = channel;
+    }
+    return signalMatrix;
+}
+
+MatrixXd Tpplot::createTopoMatrix(MatrixXd signal, QMap<QString,QPointF> mapGrid, QSize topo_matrix_size, qreal timeSample)
+{
+    qint32 channel = 0;
+    MatrixXd tp_map =  MatrixXd::Zero(topo_matrix_size.height(), topo_matrix_size.width());
+
+    // count of elektrods != count auf channels
+    if(mapGrid.count() != signal.cols())
+        return tp_map;
+
+    QMapIterator<QString, QPointF> coor(mapGrid);
+    while (coor.hasNext())
+    {
+        coor.next();
+        qreal value = signal(timeSample, channel);
+        tp_map(mapGrid[coor.key()].y(), mapGrid[coor.key()].x()) = value;
+        channel++;
+    }
+    return tp_map;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

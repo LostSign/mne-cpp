@@ -108,7 +108,6 @@ MatrixXd _atom_sum_matrix;
 MatrixXd _residuum_matrix;
 FiffEvoked _pick_evoked;
 
-QTimer *_counter_timer;
 QThread* mp_Thread;
 AdaptiveMp *adaptive_Mp;
 FixDictMp *fixDict_Mp ;
@@ -185,12 +184,14 @@ MainWindow::MainWindow(QWidget *parent) :    QMainWindow(parent),    ui(new Ui::
     is_calulating = false;
     _new_paint = true;
     _sample_rate = 1;
-    _counter_timer = new QTimer();
+    counter_timer = new QTimer();
+    topo_play_timer = new QTimer();
 
     this->cb_model = new QStandardItemModel;
     connect(this->cb_model, SIGNAL(dataChanged ( const QModelIndex&, const QModelIndex&)), this, SLOT(cb_selection_changed(const QModelIndex&, const QModelIndex&)));
     connect(ui->tbv_Results->model(), SIGNAL(dataChanged ( const QModelIndex&, const QModelIndex&)), this, SLOT(tbv_selection_changed(const QModelIndex&, const QModelIndex&)));
-    connect(_counter_timer, SIGNAL(timeout()), this, SLOT(on_time_out()));
+    connect(counter_timer, SIGNAL(timeout()), this, SLOT(on_time_out()));
+    connect(topo_play_timer, SIGNAL(timeout()), this, SLOT(on_topo_play_timer_out()));
 
     qRegisterMetaType<source_file_type>("source_file_type");
     qRegisterMetaType<Eigen::MatrixXd>("MatrixXd");
@@ -212,7 +213,13 @@ MainWindow::MainWindow(QWidget *parent) :    QMainWindow(parent),    ui(new Ui::
     QTabBar *tabBar = ui->tabWidget->findChild<QTabBar *>();
     tabBar->setTabButton(0, QTabBar::LeftSide, 0);
     tabBar->setTabButton(1, QTabBar::LeftSide, 0);
+    tabBar->setTabButton(2, QTabBar::LeftSide, 0);
+
     connect(ui->tabWidget, SIGNAL(tabCloseRequested(int)), this, SLOT(closeTab(int)));
+
+    QString selectionName(ui->cb_layouts->currentText());
+    loadLayout(QCoreApplication::applicationDirPath() + selectionName.prepend("/Resources/2DLayouts/"));
+    topoLayout = ui->tabWidget->findChild<QLayout *>("l_topoplot");
 
     QSettings settings;
     move(settings.value("pos", QPoint(200, 200)).toPoint());
@@ -431,15 +438,20 @@ void MainWindow::open_file()
     _residuum_matrix = MatrixXd::Zero(_signal_matrix.rows(), _signal_matrix.cols()); //resize
 
     //reset tabs und Tf-Overview
-    while(true)
+    if(ui->tabWidget->count() > 3)
     {
-        if(ui->tabWidget->count() > 2)
-            ui->tabWidget->removeTab(ui->tabWidget->count() - 1);
-        else
-            break;
+        ui->tabWidget->setCurrentIndex(0);
+        while(true)
+        {
+            if(ui->tabWidget->count() > 3)
+                ui->tabWidget->removeTab(ui->tabWidget->count() - 1);
+            else
+                break;
+        }
     }
-    ui->tabWidget->setCurrentIndex(0);
     m_tfPlotScene->clear();
+
+    initTopoPlot();
 
     ui->progressBarCalc->reset();
     ui->progressBarCalc->setVisible(false);
@@ -1047,7 +1059,7 @@ void GraphWindow::paint_signal(MatrixXd signalMatrix, QSize windowSize)
     painter.fillRect(0,0,windowSize.width(),windowSize.height(),QBrush(Qt::white));     // paint window white
     painter.drawRect(0,0, windowSize.width(), windowSize.height());
 
-    if(signalMatrix.rows() > 0 && signalMatrix.cols() > 0)
+    if(!signalMatrix.isZero())
     {
         const qint32 maxStrLenght = 55; // max lenght in pixel of x-axis string
         qint32 borderMarginWidth = 15;  // reduce paintspace in GraphWindow of borderMargin pixels
@@ -1099,7 +1111,7 @@ void GraphWindow::paint_signal(MatrixXd signalMatrix, QSize windowSize)
                 for(qint32 channel = 0; channel < signalMatrix.cols(); channel++)   // over all Channels
                 {
                     QPolygonF poly;
-                    for(qint32 h = 0; h < signalMatrix.rows(); h++)
+                    for(qint32 h = 0; h < signalMatrix.rows(); h++)                 // over all samples
                         poly.append(QPointF((h * scaleX) + maxStrLenght, -(signalMatrix(h, channel) * scaleY + _x_axis_height)));
                     QPen pen(_colors.at(channel), 0.5, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin);
                     painter.setPen(pen);
@@ -1154,7 +1166,7 @@ void AtomSumWindow::paint_atom_sum(MatrixXd atom_matrix, QSize windowSize, qreal
     painter.drawRect(0,0, windowSize.width(), windowSize.height());
 
     // can also checked of zerovector, then you paint no empty axis
-    if(atom_matrix.rows() > 0 && atom_matrix.cols() > 0  && _signal_matrix.rows() > 0 && _signal_matrix.cols() > 0)
+    if(atom_matrix.cols() > 0 && atom_matrix.rows() > 0 && !_signal_matrix.isZero())
     {
         const qint32 maxStrLenght = 55;
         qint32 borderMarginWidth = 15;  // reduce paintspace in GraphWindow of borderMargin pixels
@@ -1231,7 +1243,7 @@ void ResiduumWindow::paint_residuum(MatrixXd residuum_matrix, QSize windowSize, 
     painter.fillRect(0,0,windowSize.width(),windowSize.height(),QBrush(Qt::white));
     painter.drawRect(0,0, windowSize.width(), windowSize.height());
 
-    if(residuum_matrix.rows() > 0 && residuum_matrix.cols() > 0 && _signal_matrix.rows() > 0 && _signal_matrix.cols() > 0)
+    if(residuum_matrix.cols() > 0 && residuum_matrix.rows() > 0 && !_signal_matrix.isZero())
     {
         const qint32 maxStrLenght = 55;
         qint32 borderMarginWidth = 15;                             // reduce paintspace in GraphWindow of borderMargin pixels
@@ -1374,14 +1386,17 @@ void MainWindow::on_btt_Calc_clicked()
         }
 
         //reset tabs und Tf-Overview
-        while(true)
+        if(ui->tabWidget->count() > 3)
         {
-            if(ui->tabWidget->count() > 2)
-                ui->tabWidget->removeTab(ui->tabWidget->count() - 1);
-            else
-                break;
+            ui->tabWidget->setCurrentIndex(0);
+            while(true)
+            {
+                if(ui->tabWidget->count() > 3)
+                    ui->tabWidget->removeTab(ui->tabWidget->count() - 1);
+                else
+                    break;
+            }
         }
-        ui->tabWidget->setCurrentIndex(0);
         m_tfPlotScene->clear();
 
         ui->gb_trunc->setEnabled(false);
@@ -1428,8 +1443,8 @@ void MainWindow::on_btt_Calc_clicked()
 
         recieved_result_counter = 0;
         counter_time.start();
-        _counter_timer->setInterval(100);
-        _counter_timer->start();
+        counter_timer->setInterval(100);
+        counter_timer->start();
 
         if(ui->rb_OwnDictionary->isChecked())
         {
@@ -1474,7 +1489,7 @@ void MainWindow::on_time_out()
     QTime diff_time(0,0);
     diff_time = diff_time.addMSecs(counter_time.elapsed());
     ui->lb_timer->setText(diff_time.toString("hh:mm:ss.zzz"));
-    _counter_timer->start();
+    counter_timer->start();
 }
 
 //*************************************************************************************************************
@@ -1670,6 +1685,7 @@ void MainWindow::recieve_result(qint32 current_iteration, qint32 max_iterations,
             callResidumWindow->update();
         }
     }
+    /*
     else if(ui->tabWidget->currentIndex() == 2)
     {
         MatrixXd tf_sum = MatrixXd::Zero(floor(_adaptive_atom_list.first().first().sample_count/2), _adaptive_atom_list.first().first().sample_count);
@@ -1695,6 +1711,7 @@ void MainWindow::recieve_result(qint32 current_iteration, qint32 max_iterations,
 
         tfplot->resize(ui->tabWidget->size());
     }
+    */
 
     tbv_is_loading = false;
     recieved_result_counter++;
@@ -1870,7 +1887,7 @@ void MainWindow::atom_map_selection_changed()
         callResidumWindow->update();
     }
     // update TF-Plot
-    else if(ui->tabWidget->currentIndex() >= 2)
+    else if(ui->tabWidget->currentIndex() >= 3)
     {
         qint32 i = 0;
         qint32 k = 0;
@@ -1932,7 +1949,7 @@ void MainWindow::calc_thread_finished()
      ui->actionSpeicher_unter->setEnabled(true);
 
 
-    _counter_timer->stop();
+    counter_timer->stop();
     ui->gb_trunc->setEnabled(true);
     ui->btt_OpenSignal->setEnabled(true);
     ui->progressBarCalc->setValue(ui->progressBarCalc->maximum());
@@ -3407,68 +3424,8 @@ void MainWindow::on_rb_OwnDictionary_clicked()
 
 void MainWindow::on_actionTFplot_triggered()
 {
-    QString selectionName(ui->cb_layouts->currentText());
-    loadLayout(QCoreApplication::applicationDirPath() + selectionName.prepend("/Resources/2DLayouts/"));
-
-    Tpplot tplot;
-    MatrixXd topo = tplot.createMapGrid(_signal_matrix, pick_info.ch_names, m_layoutMap, QSize(256, 256));
-
-    TFplot *tfplot = new TFplot(topo, _sample_rate, Jet);
-    ui->tabWidget->addTab(tfplot, "Topoplot");
-    ui->tabWidget->setCurrentIndex(2);
-    tfplot->resize(ui->tabWidget->size());
-
-    /*
-    if(ui->tabWidget->count() == 1)
-    {
-        MatrixXd tf_sum;
-
-        tf_sum = MatrixXd::Zero(floor(_adaptive_atom_list.first().first().sample_count/2), _adaptive_atom_list.first().first().sample_count);
-
-        for(qint32 i = 0; i < _adaptive_atom_list.first().length(); i++)//foreach channel
-        {
-            for(qint32 j = 0; j < _adaptive_atom_list.length(); j++) //foreach atom
-            {
-                GaborAtom atom  = _adaptive_atom_list.at(j).at(i);
-                MatrixXd tf_matrix = atom.make_tf(atom.sample_count, atom.scale, atom.translation, atom.modulation);
-
-                tf_matrix *= atom.max_scalar_list.at(i)*atom.max_scalar_list.at(i);
-                tf_sum += tf_matrix;
-            }
-        }
-
-        tf_sum = Spectrogram::make_spectrogram(_signal_matrix.col(0), 0);
-
-        TFplot *tfplot = new TFplot(tf_sum, _sample_rate, 0, 600, Jet);
-        ui->tabWidget->addTab(tfplot, "TF-Overview 0-500Hz");
-        ui->tabWidget->setCurrentIndex(1);
-        tfplot->resize(ui->tabWidget->size());
-
-        TFplot *tfplot2 = new TFplot(tf_sum, _sample_rate, 0, 100, Jet);
-        ui->tabWidget->addTab(tfplot2, "TF-Overview 0-100Hz");
-
-        ui->tabWidget->setCurrentIndex(2);
-        tfplot2->resize(ui->tabWidget->size());
 
 
-        TFplot *tfplot3 = new TFplot(tf_sum, _sample_rate, 301, 480, Jet);
-        ui->tabWidget->addTab(tfplot3, "TF-Overview 300-480Hz");
-
-        ui->tabWidget->setCurrentIndex(3);
-        tfplot3->resize(ui->tabWidget->size());
-
-         ui->tabWidget->setCurrentIndex(1);
-         tfplot->resize(ui->tabWidget->size());
-
-        QPushButton *extendedButton = new QPushButton();
-        extendedButton->setMaximumSize(20, 20);
-        extendedButton->setStyleSheet("QPushButton {margin-right: 2px;  border-width: 1px; border-radius: 1px; border-color: grey;} QPushButton:pressed {background-color: grey; border-radius: 10px;}");
-        extendedButton->setIcon(QIcon(":/images/icons/expand_512.png"));
-        extendedButton->setIconSize(QSize(16, 16));
-
-        ui->tabWidget->tabBar()->setTabButton(1, QTabBar::LeftSide, extendedButton);
-        connect(extendedButton, SIGNAL (released()), this, SLOT (on_extend_tab_button()));
-    }  */
 }
 
 //*****************************************************************************************************************
@@ -3479,11 +3436,15 @@ void MainWindow::on_tabWidget_currentChanged(int index)
     {
        //ToDo: m_tfPlotScene->fitInView();
     }
-    if(index >= 2)
+    else if(index == 2)
+    {
+       initTopoPlot();
+    }
+    else if(index >= 3)
     {
         if(tbv_is_loading) return;       
         atom_map_selection_changed();
-    }  
+    }
 }
 
 //*************************************************************************************************************
@@ -3627,6 +3588,96 @@ void MainWindow::updateTFScene()
  {
      ui->tabWidget->removeTab(tabIndex);
  }
+
+//*************************************************************************************************************
+
+ void MainWindow::initTopoPlot()
+ {
+     Tpplot tplot;
+     QSize topoSize(64, 64);
+
+     QMap<QString, QPointF> selLayoutMap;
+     QMapIterator<qint32, bool> selChn(select_channel_map);
+
+
+     if(_signal_matrix.isZero())
+     {
+         QGraphicsView * view = new QGraphicsView();
+         topoLayout->removeWidget(last_topoplot_widget);
+         topoLayout->addWidget(view);
+         last_topoplot_widget = view;
+         return;
+     }
+
+     while (selChn.hasNext())
+     {
+         selChn.next();
+         if(selChn.value())
+             selLayoutMap[pick_info.ch_names.at(selChn.key())] = m_layoutMap[pick_info.ch_names.at(selChn.key())];
+     }
+
+     QMap<QString, QPointF> topoMap = tplot.createMapGrid(selLayoutMap, topoSize);
+     MatrixXd topoMatrix = tplot.createTopoMatrix(_signal_matrix, topoMap, topoSize, 0);
+     QLayout *topoLayout1 = ui->tabWidget->findChild<QLayout *>("l_topoplot");
+     // draw
+     TFplot *tfplot = new TFplot(topoMatrix, _sample_rate, Jet);
+     tfplot->resize(ui->tabWidget->size());
+     topoLayout1->removeWidget(last_topoplot_widget);
+     topoLayout1->addWidget(tfplot);
+     last_topoplot_widget = tfplot;
+ }
+
+//*************************************************************************************************************
+
+void MNEMatchingPursuit::MainWindow::on_btt_playtopo_clicked()
+{
+    Tpplot tplot;
+    QSize topoSize(64, 64);
+
+    ui->sli_topoTime->setMinimum(0);
+    ui->sli_topoTime->setMaximum(_signal_matrix.rows());
+
+    QMap<QString, QPointF> selLayoutMap;
+    QMapIterator<qint32, bool> selChn(select_channel_map);
+    while (selChn.hasNext())
+    {
+        selChn.next();
+        if(selChn.value())
+            selLayoutMap[pick_info.ch_names.at(selChn.key())] = m_layoutMap[pick_info.ch_names.at(selChn.key())];
+    }
+
+    QMap<QString, QPointF> topoMap = tplot.createMapGrid(selLayoutMap, topoSize);
+
+    for(qint32 time = 0; time < _signal_matrix.rows(); time++)
+    {
+        topoMatrix = tplot.createTopoMatrix(_signal_matrix, topoMap, topoSize, time);
+        topo_play_timer->start(10);
+        do
+        {
+            qApp->processEvents();
+        }
+        while(topo_play_timer->isActive());
+        ui->sli_topoTime->setValue(time);
+    }
+}
+
+//*************************************************************************************************************
+
+void MainWindow::on_topo_play_timer_out()
+{
+    TFplot *tfplot = new TFplot(topoMatrix, _sample_rate, Jet);
+    tfplot->resize(ui->tabWidget->size());
+    topoLayout->replaceWidget(last_topoplot_widget, tfplot);
+    last_topoplot_widget = tfplot;
+
+    topo_play_timer->stop();
+    //tfplot->deleteLater();
+    //~tfplot;
+}
+
+
+
+
 
 
 

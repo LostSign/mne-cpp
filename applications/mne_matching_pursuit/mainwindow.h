@@ -563,6 +563,8 @@ private slots:
     void onComboBoxLayoutChanged();   
     void recieve_current_item(TFSceneItem * item);
     void closeTab(int tabIndex);
+    void on_btt_playtopo_clicked();
+    void on_topo_play_timer_out();
 
 signals:
 
@@ -597,6 +599,7 @@ private:
     source_file_type file_type;
     QString last_open_path;
     QString last_save_path;
+    QWidget *last_topoplot_widget;
     QMap<qint32, bool> select_channel_map;
     QMap<qint32, bool> select_atoms_map;
     QMap<qint32, bool> all_select_atoms_map;
@@ -605,6 +608,7 @@ private:
     QList<FixDictAtom> _fix_dict_atom_list;
     MatrixXd datas;
     RowVectorXf times_vec;
+    MatrixXd topoMatrix;
     MatrixXd times;
     MatrixXd original_signal_matrix;
     MatrixXd reference_matrix;
@@ -621,8 +625,9 @@ private:
     RowVectorXi picks;
     FiffInfo pick_info;
     QPalette pal;
-
-    QTimer *_counter_timer;
+    QTimer *counter_timer;
+    QTimer *topo_play_timer;
+    QLayout *topoLayout;
     QThread* mp_Thread;
     AdaptiveMp *adaptive_Mp;
     FixDictMp *fixDict_Mp ;
@@ -884,6 +889,7 @@ private:
     bool loadLayout(QString path);
     void initTFPlotSceneView();
     void updateTFScene();
+    void initTopoPlot();
 
     //=========================================================================================================
 
