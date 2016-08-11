@@ -989,7 +989,7 @@ min-height:50px;</string>
               </property>
               <property name="icon">
                <iconset resource="Ressourcen.qrc">
-                <normaloff>:/images/icons/play_button.png</normaloff>:/images/icons/play_button.png</iconset>
+                <normaloff>:/images/icons/play.png</normaloff>:/images/icons/play.png</iconset>
               </property>
               <property name="iconSize">
                <size>

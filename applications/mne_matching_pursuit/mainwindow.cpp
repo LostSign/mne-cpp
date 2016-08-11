@@ -125,8 +125,7 @@ const QSize* psize = new QSize(10, 10);
 //=============================================================================================================
 MainWindow::MainWindow(QWidget *parent) :    QMainWindow(parent),    ui(new Ui::MainWindow)
 {
-    ui->setupUi(this);
-
+    ui->setupUi(this);  
     auto_change = false;
     all_select_change = false;
 
@@ -3563,9 +3562,9 @@ void MainWindow::updateTFScene()
                     tf_sum += tf_matrix;
                 }
 
-                TFplot *tf_plot;
+                TFplot *tf_plot = new TFplot();
                 tf_image = tf_plot->creatTFPlotImage(tf_sum, QSize(60,30), Jet);
-
+                //*tf_image = tf_image->scaledToWidth(256, Qt::SmoothTransformation);
                 l++;
             }
             TFPlotItemStruct tfPlotItemStruct;
@@ -3618,13 +3617,18 @@ void MainWindow::updateTFScene()
 
      QMap<QString, QPointF> topoMap = tplot.createMapGrid(selLayoutMap, topoSize);
      MatrixXd topoMatrix = tplot.createTopoMatrix(_signal_matrix, topoMap, topoSize, 0);
-     QLayout *topoLayout1 = ui->tabWidget->findChild<QLayout *>("l_topoplot");
+
      // draw
-     TFplot *tfplot = new TFplot(topoMatrix, _sample_rate, Jet);
-     tfplot->resize(ui->tabWidget->size());
-     topoLayout1->removeWidget(last_topoplot_widget);
-     topoLayout1->addWidget(tfplot);
-     last_topoplot_widget = tfplot;
+     TFplot *plot = new TFplot();
+     QLabel *lab = new QLabel();
+     lab->setAlignment(Qt::AlignCenter);
+     QImage *image = plot->creatTFPlotImage(topoMatrix, topoSize, Jet);
+     *image = image->scaledToHeight(ui->tabWidget->height() * 0.89, Qt::SmoothTransformation);
+     lab->setPixmap(QPixmap::fromImage(*image));
+     topoLayout->removeWidget(last_topoplot_widget);
+     topoLayout->addWidget(lab);
+     last_topoplot_widget = lab;
+     topoMatrix.resize(0,0);
  }
 
 //*************************************************************************************************************
@@ -3633,6 +3637,7 @@ void MNEMatchingPursuit::MainWindow::on_btt_playtopo_clicked()
 {
     Tpplot tplot;
     QSize topoSize(64, 64);
+    ui->btt_playtopo->setIcon(QIcon(":/images/icons/stop.png"));
 
     ui->sli_topoTime->setMinimum(0);
     ui->sli_topoTime->setMaximum(_signal_matrix.rows());
@@ -3650,29 +3655,51 @@ void MNEMatchingPursuit::MainWindow::on_btt_playtopo_clicked()
 
     for(qint32 time = 0; time < _signal_matrix.rows(); time++)
     {
-        topoMatrix = tplot.createTopoMatrix(_signal_matrix, topoMap, topoSize, time);
-        topo_play_timer->start(10);
-        do
+
+        TFplot *plot = new TFplot();
+        QLabel *lab = new QLabel();
+        lab->setAlignment(Qt::AlignCenter);
+        MatrixXd topoMatrix = tplot.createTopoMatrix(_signal_matrix, topoMap, topoSize, time);
+        QImage *image = plot->creatTFPlotImage(topoMatrix, topoSize, Jet);
+        *image = image->scaledToHeight(ui->tabWidget->height() * 0.89, Qt::SmoothTransformation);
+        lab->setPixmap(QPixmap::fromImage(*image));
+        topoLayout->replaceWidget(last_topoplot_widget, lab);
+        if(last_topoplot_widget != NULL)
         {
-            qApp->processEvents();
+            //delete last_topoplot_widget;
+            //delete plot;
+            //delete scene;
         }
-        while(topo_play_timer->isActive());
+        last_topoplot_widget = lab;
+        topoMatrix.resize(0,0);
+        qApp->processEvents();
         ui->sli_topoTime->setValue(time);
     }
+
+    ui->sli_topoTime->setValue(0);
+    initTopoPlot();
+    ui->btt_playtopo->setIcon(QIcon(":/images/icons/play.png"));
 }
 
 //*************************************************************************************************************
 
 void MainWindow::on_topo_play_timer_out()
 {
+    /*
     TFplot *tfplot = new TFplot(topoMatrix, _sample_rate, Jet);
     tfplot->resize(ui->tabWidget->size());
     topoLayout->replaceWidget(last_topoplot_widget, tfplot);
+    if(last_topoplot_widget != NULL)
+    {
+        delete last_topoplot_widget;
+        //last_topoplot_widget->deleteLater();
+        //last_topoplot_widget->;
+    }
     last_topoplot_widget = tfplot;
 
     topo_play_timer->stop();
-    //tfplot->deleteLater();
-    //~tfplot;
+
+    //~tfplot;*/
 }
 
 

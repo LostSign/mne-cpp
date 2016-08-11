@@ -607,8 +607,7 @@ private:
     QList<QList<GaborAtom> > _adaptive_atom_list;
     QList<FixDictAtom> _fix_dict_atom_list;
     MatrixXd datas;
-    RowVectorXf times_vec;
-    MatrixXd topoMatrix;
+    RowVectorXf times_vec;    
     MatrixXd times;
     MatrixXd original_signal_matrix;
     MatrixXd reference_matrix;
