@@ -3431,9 +3431,14 @@ void MainWindow::on_actionTFplot_triggered()
 
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
+    if(index == 0)
+    {
+         if(last_topoplot_widget != NULL) delete last_topoplot_widget;
+    }
     if(index == 1)
     {
        //ToDo: m_tfPlotScene->fitInView();
+       if(last_topoplot_widget != NULL) delete last_topoplot_widget;
     }
     else if(index == 2)
     {
@@ -3441,8 +3446,9 @@ void MainWindow::on_tabWidget_currentChanged(int index)
     }
     else if(index >= 3)
     {
+        if(last_topoplot_widget != NULL) delete last_topoplot_widget;
         if(tbv_is_loading) return;       
-        atom_map_selection_changed();
+        atom_map_selection_changed();        
     }
 }
 
@@ -3623,10 +3629,11 @@ void MainWindow::updateTFScene()
      QLabel *lab = new QLabel();
      lab->setAlignment(Qt::AlignCenter);
      QImage *image = plot->creatTFPlotImage(topoMatrix, topoSize, Jet);
-     *image = image->scaledToHeight(ui->tabWidget->height() * 0.89, Qt::SmoothTransformation);
+     *image = image->scaledToHeight(ui->tabWidget->height() * 0.89, Qt::FastTransformation);
      lab->setPixmap(QPixmap::fromImage(*image));
      topoLayout->removeWidget(last_topoplot_widget);
      topoLayout->addWidget(lab);
+     if(image != NULL) delete image;
      last_topoplot_widget = lab;
      topoMatrix.resize(0,0);
  }
@@ -3635,10 +3642,18 @@ void MainWindow::updateTFScene()
 
 void MNEMatchingPursuit::MainWindow::on_btt_playtopo_clicked()
 {
+    QLabel *lab;
     Tpplot tplot;
+    QImage *image;
+    MatrixXd topoMatrix;
     QSize topoSize(64, 64);
-    ui->btt_playtopo->setIcon(QIcon(":/images/icons/stop.png"));
+    TFplot *plot = new TFplot();
+    qint32 scaleHeight = ui->tabWidget->height() * 0.89;
+    QString endSample = QString::number(_signal_matrix.rows() - 1, 'f', 0);
+    QString endTime = QString::number((_to / _sample_rate) + _offset_time, 'f', 4);
 
+    ui->lb_topotime->setAlignment(Qt::AlignRight);
+    ui->btt_playtopo->setIcon(QIcon(":/images/icons/stop.png"));
     ui->sli_topoTime->setMinimum(0);
     ui->sli_topoTime->setMaximum(_signal_matrix.rows());
 
@@ -3649,35 +3664,30 @@ void MNEMatchingPursuit::MainWindow::on_btt_playtopo_clicked()
         selChn.next();
         if(selChn.value())
             selLayoutMap[pick_info.ch_names.at(selChn.key())] = m_layoutMap[pick_info.ch_names.at(selChn.key())];
-    }
-
+    }    
     QMap<QString, QPointF> topoMap = tplot.createMapGrid(selLayoutMap, topoSize);
 
     for(qint32 time = 0; time < _signal_matrix.rows(); time++)
     {
-
-        TFplot *plot = new TFplot();
-        QLabel *lab = new QLabel();
+        lab = new QLabel();
         lab->setAlignment(Qt::AlignCenter);
-        MatrixXd topoMatrix = tplot.createTopoMatrix(_signal_matrix, topoMap, topoSize, time);
-        QImage *image = plot->creatTFPlotImage(topoMatrix, topoSize, Jet);
-        *image = image->scaledToHeight(ui->tabWidget->height() * 0.89, Qt::SmoothTransformation);
+
+        topoMatrix = tplot.createTopoMatrix(_signal_matrix, topoMap, topoSize, time);
+        image = plot->creatTFPlotImage(topoMatrix, topoSize, Jet);
+        *image = image->scaledToHeight(scaleHeight, Qt::FastTransformation);
         lab->setPixmap(QPixmap::fromImage(*image));
         topoLayout->replaceWidget(last_topoplot_widget, lab);
-        if(last_topoplot_widget != NULL)
-        {
-            //delete last_topoplot_widget;
-            //delete plot;
-            //delete scene;
-        }
+        if(last_topoplot_widget != NULL) delete last_topoplot_widget;
+        if(image != NULL) delete image;
         last_topoplot_widget = lab;
-        topoMatrix.resize(0,0);
-        qApp->processEvents();
+        qApp->processEvents();       
         ui->sli_topoTime->setValue(time);
+        repaint();
+        Sleep(25);
+        ui->lb_topotime->setText("sample: " + QString::number(time, 'f', 0) + " / " + endSample +
+                                 "  time: " + QString::number((_from + time) / _sample_rate + _offset_time, 'f', 4) + " / " + endTime + "sec");
     }
 
-    ui->sli_topoTime->setValue(0);
-    initTopoPlot();
     ui->btt_playtopo->setIcon(QIcon(":/images/icons/play.png"));
 }
 

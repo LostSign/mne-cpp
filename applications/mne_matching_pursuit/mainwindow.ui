@@ -967,8 +967,8 @@ QTabBar::tab:only-one {
            <attribute name="title">
             <string>Topoplot</string>
            </attribute>
-           <layout class="QGridLayout" name="gridLayout_3">
-            <item row="2" column="1">
+           <layout class="QGridLayout" name="gridLayout_3" rowstretch="1,0,0,0">
+            <item row="3" column="1">
              <widget class="QPushButton" name="btt_playtopo">
               <property name="styleSheet">
                <string notr="true">background-color: qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 white,  stop:1 grey);
@@ -999,7 +999,7 @@ min-height:50px;</string>
               </property>
              </widget>
             </item>
-            <item row="2" column="0">
+            <item row="3" column="0">
              <spacer name="horizontalSpacer">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
@@ -1012,7 +1012,7 @@ min-height:50px;</string>
               </property>
              </spacer>
             </item>
-            <item row="2" column="2">
+            <item row="3" column="2">
              <spacer name="horizontalSpacer_2">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
@@ -1036,6 +1036,19 @@ min-height:50px;</string>
              <widget class="QSlider" name="sli_topoTime">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="2">
+             <widget class="QLabel" name="lb_topotime">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string/>
               </property>
              </widget>
             </item>
