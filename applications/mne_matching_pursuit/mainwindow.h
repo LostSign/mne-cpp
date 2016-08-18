@@ -143,7 +143,7 @@ class GraphWindow;
 class ResiduumWindow;
 class AtomSumWindow;
 class XAxisWindow;
-class tfplotwidget;
+//class tfplotwidget;
 
 class MainWindow : public QMainWindow, ColorMap
 {
@@ -553,18 +553,127 @@ private slots:
     void recieve_save_progress(qint32 current_progress, qint32 finished);
 
     //==========================================================================================================
-
+    /**
+    * on_dsb_energy_valueChanged
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
     void on_dsb_energy_valueChanged(double arg1);
+
+    //==========================================================================================================
+    /**
+    * on_actionBeenden_triggered
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
     void on_actionBeenden_triggered();
+
+    //==========================================================================================================
+    /**
+    * on_mouse_button_release
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
     void on_mouse_button_release();
+
+    //==========================================================================================================
+    /**
+    * on_rb_OwnDictionary_clicked
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
     void on_rb_OwnDictionary_clicked();
+
+    //==========================================================================================================
+    /**
+    * on_actionTFplot_triggered
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
     void on_actionTFplot_triggered();
+
+    //==========================================================================================================
+    /**
+    * on_tabWidget_currentChanged
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
     void on_tabWidget_currentChanged(int index);
-    void onComboBoxLayoutChanged();   
+
+    //==========================================================================================================
+    /**
+    * onComboBoxLayoutChanged
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
+    void onComboBoxLayoutChanged();
+
+    //==========================================================================================================
+    /**
+    * recieve_current_item
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
     void recieve_current_item(TFSceneItem * item);
+
+    //==========================================================================================================
+    /**
+    * closeTab
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
     void closeTab(int tabIndex);
+
+    //==========================================================================================================
+    /**
+    * on_btt_playtopo_clicked
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
     void on_btt_playtopo_clicked();
-    void on_topo_play_timer_out();
+
+    //==========================================================================================================
+
 
 signals:
 
@@ -585,7 +694,7 @@ private:
     bool was_partialchecked;
     bool read_fiff_changed;
     bool is_white;
-    bool is_calulating;
+    bool is_calulating;   
     fiff_int_t last_to;
     fiff_int_t last_from;
     qint32 last_sample_count;
@@ -625,7 +734,6 @@ private:
     FiffInfo pick_info;
     QPalette pal;
     QTimer *counter_timer;
-    QTimer *topo_play_timer;
     QLayout *topoLayout;
     QThread* mp_Thread;
     AdaptiveMp *adaptive_Mp;
@@ -871,7 +979,6 @@ private:
     static bool sort_energy_fix(const FixDictAtom atom_1, const FixDictAtom atom_2);
 
     //==========================================================================================================
-
     /**
     * MainWindow_atom_map_selection_changed
     *
@@ -883,17 +990,67 @@ private:
     void MainWindow::atom_map_selection_changed();
 
     //==========================================================================================================
-
+    /**
+    * initComboBoxes
+    *
+    * ### MP toolbox main function ###
+    *
+    * initialized Combobox for electodes layout
+    *
+    */
     void initComboBoxes();
+
+    //==========================================================================================================
+    /**
+    * loadLayout
+    *
+    * ### MP toolbox main function ###
+    *
+    * load the electodes layout
+    *
+    */
     bool loadLayout(QString path);
+
+    //==========================================================================================================
+    /**
+    * initTFPlotSceneView
+    *
+    * ### MP toolbox main function ###
+    *
+    * initialized Time-Frequentcy-Scene
+    *
+    */
     void initTFPlotSceneView();
+
+    //==========================================================================================================
+    /**
+    * updateTFScene
+    *
+    * ### MP toolbox main function ###
+    *
+    * prepares update for Time-Frequentcy-Scene
+    *
+    */
     void updateTFScene();
+
+    //==========================================================================================================
+    /**
+    * initTopoPlot
+    *
+    * ### MP toolbox main function ###
+    *
+    * initialized topoplot
+    *
+    */
     void initTopoPlot();
 
     //=========================================================================================================
 
 
 };
+
+
+
 
 //*************************************************************************************************************
 // Widget to paint inputsignal
@@ -932,6 +1089,9 @@ signals:
    //==========================================================================================================
 };
 
+
+
+
 //*************************************************************************************************************
 // Widget to paint atoms
 class AtomSumWindow : public QWidget
@@ -962,6 +1122,9 @@ public:
 
    //==========================================================================================================
 };
+
+
+
 
 //*************************************************************************************************************
 // Widget to paint residuum
@@ -994,6 +1157,9 @@ public:
     //=========================================================================================================
 };
 
+
+
+
 // Widget to paint x-axis
 class XAxisWindow : public QWidget
 {
@@ -1021,6 +1187,9 @@ public:
    //==========================================================================================================
 };
 
+
+
+
 //save fif file class
 class SaveFifFile : public QThread
 {
@@ -1033,7 +1202,6 @@ class SaveFifFile : public QThread
 
 public:
     SaveFifFile();
-
     ~SaveFifFile();
 
 private slots:
@@ -1051,6 +1219,39 @@ private slots:
 
 signals:
     void save_progress(qint32 current_progress, qint32 finished);
+
+};
+
+
+
+
+//play topoplot class
+class PlayTopoPlot : public QThread
+{
+    Q_OBJECT
+
+
+
+public:
+    PlayTopoPlot();
+    ~PlayTopoPlot();
+
+private slots:
+    //==========================================================================================================
+    /**
+    * play_topoplot
+    *
+    * ### MP toolbox main function ###
+    *
+    * playing the topoplot
+    *
+    * @return   void
+    */
+    void play_topoplot();
+    void paused_topoplot();
+
+signals:
+    void recive_view(qint32 current_progress, qint32 finished);
 
 };
 }

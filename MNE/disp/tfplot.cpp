@@ -336,11 +336,7 @@ QImage * TFplot::creatTFPlotImage(MatrixXd tf_matrix, QSize imageSize, ColorMaps
             ximage++;
         }
         yimage++;
-    }
-
-    //*image_to_tf_plot = image_to_tf_plot->scaled(tf_matrix.cols(), tf_matrix.cols()/2, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-    //*image_to_tf_plot = image_to_tf_plot->scaledToWidth(500, Qt::SmoothTransformation);
-
+    }  
     return image_to_tf_plot;
 }
 

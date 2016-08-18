@@ -184,13 +184,11 @@ MainWindow::MainWindow(QWidget *parent) :    QMainWindow(parent),    ui(new Ui::
     _new_paint = true;
     _sample_rate = 1;
     counter_timer = new QTimer();
-    topo_play_timer = new QTimer();
 
     this->cb_model = new QStandardItemModel;
     connect(this->cb_model, SIGNAL(dataChanged ( const QModelIndex&, const QModelIndex&)), this, SLOT(cb_selection_changed(const QModelIndex&, const QModelIndex&)));
     connect(ui->tbv_Results->model(), SIGNAL(dataChanged ( const QModelIndex&, const QModelIndex&)), this, SLOT(tbv_selection_changed(const QModelIndex&, const QModelIndex&)));
-    connect(counter_timer, SIGNAL(timeout()), this, SLOT(on_time_out()));
-    connect(topo_play_timer, SIGNAL(timeout()), this, SLOT(on_topo_play_timer_out()));
+    connect(counter_timer, SIGNAL(timeout()), this, SLOT(on_time_out()));    
 
     qRegisterMetaType<source_file_type>("source_file_type");
     qRegisterMetaType<Eigen::MatrixXd>("MatrixXd");
@@ -3423,8 +3421,7 @@ void MainWindow::on_rb_OwnDictionary_clicked()
 
 void MainWindow::on_actionTFplot_triggered()
 {
-
-
+    // ToDo: delete
 }
 
 //*****************************************************************************************************************
@@ -3664,7 +3661,7 @@ void MNEMatchingPursuit::MainWindow::on_btt_playtopo_clicked()
         selChn.next();
         if(selChn.value())
             selLayoutMap[pick_info.ch_names.at(selChn.key())] = m_layoutMap[pick_info.ch_names.at(selChn.key())];
-    }    
+    }
     QMap<QString, QPointF> topoMap = tplot.createMapGrid(selLayoutMap, topoSize);
 
     for(qint32 time = 0; time < _signal_matrix.rows(); time++)
@@ -3680,37 +3677,32 @@ void MNEMatchingPursuit::MainWindow::on_btt_playtopo_clicked()
         if(last_topoplot_widget != NULL) delete last_topoplot_widget;
         if(image != NULL) delete image;
         last_topoplot_widget = lab;
-        qApp->processEvents();       
+
         ui->sli_topoTime->setValue(time);
-        repaint();
-        Sleep(25);
         ui->lb_topotime->setText("sample: " + QString::number(time, 'f', 0) + " / " + endSample +
                                  "  time: " + QString::number((_from + time) / _sample_rate + _offset_time, 'f', 4) + " / " + endTime + "sec");
+        qApp->processEvents();
+        repaint();
+        Sleep(20);
     }
 
     ui->btt_playtopo->setIcon(QIcon(":/images/icons/play.png"));
 }
 
+
+void PlayTopoPlot::play_topoplot()
+{
+
+}
+
+
+void PlayTopoPlot::paused_topoplot()
+{
+
+}
+
 //*************************************************************************************************************
 
-void MainWindow::on_topo_play_timer_out()
-{
-    /*
-    TFplot *tfplot = new TFplot(topoMatrix, _sample_rate, Jet);
-    tfplot->resize(ui->tabWidget->size());
-    topoLayout->replaceWidget(last_topoplot_widget, tfplot);
-    if(last_topoplot_widget != NULL)
-    {
-        delete last_topoplot_widget;
-        //last_topoplot_widget->deleteLater();
-        //last_topoplot_widget->;
-    }
-    last_topoplot_widget = tfplot;
-
-    topo_play_timer->stop();
-
-    //~tfplot;*/
-}
 
 
 
