@@ -74,7 +74,7 @@ namespace DISPLIB
 using namespace Eigen;
 //using namespace UTILSLIB;
 
-
+/*
 enum ColorMaps
 {
     Hot,
@@ -84,6 +84,7 @@ enum ColorMaps
     Bone,
     RedBlue
 };
+*/
 
 class DISPSHARED_EXPORT TFplot : public QWidget
 {

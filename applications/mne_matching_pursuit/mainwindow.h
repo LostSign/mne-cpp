@@ -143,7 +143,6 @@ class GraphWindow;
 class ResiduumWindow;
 class AtomSumWindow;
 class XAxisWindow;
-//class tfplotwidget;
 
 class MainWindow : public QMainWindow, ColorMap
 {
@@ -159,6 +158,7 @@ public:
     typedef QList<QList<GaborAtom> > adaptive_atom_list;
     typedef QList<FixDictAtom> fix_dict_atom_list;
     typedef QMap<qint32, bool> select_map;
+    typedef QMap<QString,QPointF> topo_map;
     typedef Eigen::VectorXd VectorXd;
     typedef Eigen::RowVectorXi RowVectorXi;
     typedef TFPlotSceneItem TFSceneItem;
@@ -672,6 +672,8 @@ private slots:
     */
     void on_btt_playtopo_clicked();
 
+    void recieve_view(QImage *image, qint32 play_time);
+
     //==========================================================================================================
 
 
@@ -682,6 +684,7 @@ signals:
     void send_input_fix_dict(MatrixXd send_signal, qint32 send_max_iterations, qreal send_epsilon, qint32 boost, QString path, qreal delta);
     void to_save(QString source_path, QString save_path, fiff_int_t start_change, fiff_int_t end_change, MatrixXd changes, MatrixXd original_signal, select_map select_channel_map, RowVectorXi picks, source_file_type file_type);
     void kill_save_thread();
+    void send_play_input(topo_map topoMap, MatrixXd signalMatrix, QSize mapSize, qint32 play_time, qint32 scaleHeigh);
 
 private:
 
@@ -694,7 +697,7 @@ private:
     bool was_partialchecked;
     bool read_fiff_changed;
     bool is_white;
-    bool is_calulating;   
+    bool is_calulating;
     fiff_int_t last_to;
     fiff_int_t last_from;
     qint32 last_sample_count;
@@ -708,7 +711,6 @@ private:
     source_file_type file_type;
     QString last_open_path;
     QString last_save_path;
-    QWidget *last_topoplot_widget;
     QMap<qint32, bool> select_channel_map;
     QMap<qint32, bool> select_atoms_map;
     QMap<qint32, bool> all_select_atoms_map;
@@ -716,13 +718,13 @@ private:
     QList<QList<GaborAtom> > _adaptive_atom_list;
     QList<FixDictAtom> _fix_dict_atom_list;
     MatrixXd datas;
-    RowVectorXf times_vec;    
+    RowVectorXf times_vec;
     MatrixXd times;
     MatrixXd original_signal_matrix;
     MatrixXd reference_matrix;
     MatrixXd real_residuum_matrix;
     QTime counter_time;
-    Ui::MainWindow *ui;    
+    Ui::MainWindow *ui;
     GraphWindow *callGraphWindow;
     AtomSumWindow *callAtomSumWindow;
     ResiduumWindow *callResidumWindow;
@@ -734,10 +736,14 @@ private:
     FiffInfo pick_info;
     QPalette pal;
     QTimer *counter_timer;
-    QLayout *topoLayout;
-    QThread* mp_Thread;
+    QLabel * topoLabel;
+    /*
+    QThread *mp_Thread;
+    QThread *play_topo_Thread;
+    PlayTopoPlot *play_TopoPlot;
     AdaptiveMp *adaptive_Mp;
     FixDictMp *fixDict_Mp ;
+    */
 
     QMap<QString,QPointF>           m_layoutMap;                         /**< QMap with the loaded layout. each channel name correspond to a QPointF variable. */
     TFPlotScene*                 m_tfPlotScene;                          /**< Pointer to the selection scene class. */
@@ -1138,7 +1144,7 @@ class ResiduumWindow : public QWidget
 
 public:
     //=========================================================================================================
-    /**    
+    /**
     * ResiduumWindow_paint_residuum
     *
     * ### MP toolbox GUI function ###
@@ -1230,13 +1236,13 @@ class PlayTopoPlot : public QThread
 {
     Q_OBJECT
 
-
+    typedef QMap<QString,QPointF> topo_map;
 
 public:
     PlayTopoPlot();
     ~PlayTopoPlot();
 
-private slots:
+public slots:
     //==========================================================================================================
     /**
     * play_topoplot
@@ -1247,13 +1253,14 @@ private slots:
     *
     * @return   void
     */
-    void play_topoplot();
-    void paused_topoplot();
+    void play_tplot(topo_map topoMap, MatrixXd signalMatrix, QSize topoSize, qint32 play_time, qint32 scaleHeight);
+    void paused_topoplot(qint32 time);
 
 signals:
-    void recive_view(qint32 current_progress, qint32 finished);
+    void send_view(QImage *image, qint32 play_time);
 
 };
+
 }
 
 //*************************************************************************************************************

@@ -41,6 +41,7 @@
 //=============================================================================================================
 
 #include "disp_global.h"
+#include <disp/helpers/colormap.h>
 
 //*************************************************************************************************************
 //=============================================================================================================
@@ -79,7 +80,8 @@ public:
 
     QMap<QString,QPointF> createMapGrid(QMap<QString,QPointF> layoutMap, QSize topo_matrix_size);
     MatrixXd normSignal(MatrixXd signalMatrix);
-    MatrixXd createTopoMatrix(MatrixXd normSignal, QMap<QString, QPointF> mapGrid, QSize topo_matrix_size, qreal timeSample);
+    MatrixXd createTopoMatrix(MatrixXd normSignal, QMap<QString, QPointF> mapGrid, QSize topo_matrix_size, qreal timeSample);    
+    QImage * creatPlotImage(MatrixXd tf_matrix, QSize imageSize, ColorMaps cmap);
 };
 
 }

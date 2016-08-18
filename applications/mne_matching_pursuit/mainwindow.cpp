@@ -108,6 +108,9 @@ MatrixXd _atom_sum_matrix;
 MatrixXd _residuum_matrix;
 FiffEvoked _pick_evoked;
 
+QThread *play_topo_Thread;
+PlayTopoPlot *play_TopoPlot;
+
 QThread* mp_Thread;
 AdaptiveMp *adaptive_Mp;
 FixDictMp *fixDict_Mp ;
@@ -125,7 +128,7 @@ const QSize* psize = new QSize(10, 10);
 //=============================================================================================================
 MainWindow::MainWindow(QWidget *parent) :    QMainWindow(parent),    ui(new Ui::MainWindow)
 {
-    ui->setupUi(this);  
+    ui->setupUi(this);
     auto_change = false;
     all_select_change = false;
 
@@ -188,7 +191,7 @@ MainWindow::MainWindow(QWidget *parent) :    QMainWindow(parent),    ui(new Ui::
     this->cb_model = new QStandardItemModel;
     connect(this->cb_model, SIGNAL(dataChanged ( const QModelIndex&, const QModelIndex&)), this, SLOT(cb_selection_changed(const QModelIndex&, const QModelIndex&)));
     connect(ui->tbv_Results->model(), SIGNAL(dataChanged ( const QModelIndex&, const QModelIndex&)), this, SLOT(tbv_selection_changed(const QModelIndex&, const QModelIndex&)));
-    connect(counter_timer, SIGNAL(timeout()), this, SLOT(on_time_out()));    
+    connect(counter_timer, SIGNAL(timeout()), this, SLOT(on_time_out()));
 
     qRegisterMetaType<source_file_type>("source_file_type");
     qRegisterMetaType<Eigen::MatrixXd>("MatrixXd");
@@ -198,6 +201,7 @@ MainWindow::MainWindow(QWidget *parent) :    QMainWindow(parent),    ui(new Ui::
     qRegisterMetaType<fix_dict_atom_list>("fix_dict_atom_list");
     qRegisterMetaType<FIFFLIB::fiff_int_t>("fiff_int_t");
     qRegisterMetaType<select_map>("select_map");
+    qRegisterMetaType<topo_map>("topo_map");
 
     QDir dir(QDir::homePath() + "/" + "Matching-Pursuit-Toolbox");
     if(!dir.exists())dir.mkdir(".");
@@ -216,7 +220,7 @@ MainWindow::MainWindow(QWidget *parent) :    QMainWindow(parent),    ui(new Ui::
 
     QString selectionName(ui->cb_layouts->currentText());
     loadLayout(QCoreApplication::applicationDirPath() + selectionName.prepend("/Resources/2DLayouts/"));
-    topoLayout = ui->tabWidget->findChild<QLayout *>("l_topoplot");
+    topoLabel = ui->tabWidget->findChild<QLabel *>("lb_topo_image");
 
     QSettings settings;
     move(settings.value("pos", QPoint(200, 200)).toPoint());
@@ -239,7 +243,7 @@ MainWindow::MainWindow(QWidget *parent) :    QMainWindow(parent),    ui(new Ui::
 //*************************************************************************************************************************************
 
 MainWindow::~MainWindow()
-{    
+{
     if(_editor_window != NULL)
         delete _editor_window;
     if(_enhanced_editor_window != NULL)
@@ -267,6 +271,14 @@ SaveFifFile::SaveFifFile(){}
 //*************************************************************************************************************************************
 
 SaveFifFile::~SaveFifFile(){}
+
+//*************************************************************************************************************************************
+
+PlayTopoPlot::PlayTopoPlot(){}
+
+//*************************************************************************************************************************************
+
+PlayTopoPlot::~PlayTopoPlot(){}
 
 //*************************************************************************************************************************************
 
@@ -427,7 +439,7 @@ void MainWindow::open_file()
     ui->tbv_Results->setRowCount(0);
     ui->lb_figure_of_merit->setHidden(true);
     callXAxisWindow->setMinimumHeight(22);
-    callXAxisWindow->setMaximumHeight(22);    
+    callXAxisWindow->setMaximumHeight(22);
     ui->actionTFplot->setEnabled(true);
 
 
@@ -481,7 +493,7 @@ bool MainWindow::read_fiff_ave(QString file_name)
 
     fiff_int_t setno = 0;
     QPair<QVariant, QVariant> baseline(QVariant(), 0);
-    FiffEvoked evoked(t_fileEvoked, setno, baseline);    
+    FiffEvoked evoked(t_fileEvoked, setno, baseline);
     if(evoked.isEmpty())
         return false;
 
@@ -650,8 +662,8 @@ bool MainWindow::read_fiff_file(QString fileName)
     picks = raw.info.pick_types(want_meg, want_eeg, want_stim/*, include /*, raw.info.bads*/);
 
     //save fiff data borders global
-    _first_sample = raw.first_samp;    
-    _last_sample = raw.last_samp;    
+    _first_sample = raw.first_samp;
+    _last_sample = raw.last_samp;
 
     if(_from == -1)
     {
@@ -660,7 +672,7 @@ bool MainWindow::read_fiff_file(QString fileName)
         else _to = _last_sample;
     }
 
-    ui->dsb_sample_rate->setValue(raw.info.sfreq);    
+    ui->dsb_sample_rate->setValue(raw.info.sfreq);
     _sample_rate = raw.info.sfreq;
 
     pick_info = raw.info.pick_info(picks);
@@ -687,7 +699,7 @@ bool MainWindow::read_fiff_file(QString fileName)
 //*************************************************************************************************************************************
 
 void MainWindow::read_fiff_file_new(QString file_name)
-{  
+{
     qint32 selected_chn = 0;
     read_fiff_file(file_name);
     original_signal_matrix = _signal_matrix;
@@ -716,7 +728,7 @@ void MainWindow::read_fiff_file_new(QString file_name)
     ui->actionSpeicher->setEnabled(false);
     ui->actionSpeicher_unter->setEnabled(false);
     ui->lb_info_content->clear();
-    ui->cb_all_select->setHidden(true);    
+    ui->cb_all_select->setHidden(true);
     ui->lb_timer->setHidden(true);
     ui->progressBarCalc->setHidden(true);
     ui->actionExport->setEnabled(false);
@@ -1112,7 +1124,7 @@ void GraphWindow::paint_signal(MatrixXd signalMatrix, QSize windowSize)
                         poly.append(QPointF((h * scaleX) + maxStrLenght, -(signalMatrix(h, channel) * scaleY + _x_axis_height)));
                     QPen pen(_colors.at(channel), 0.5, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin);
                     painter.setPen(pen);
-                    painter.drawPolyline(poly);                    
+                    painter.drawPolyline(poly);
                 }
 
                 // paint x-axis
@@ -1141,7 +1153,7 @@ void GraphWindow::paint_signal(MatrixXd signalMatrix, QSize windowSize)
         }
         painter.drawLine(maxStrLenght, 2, maxStrLenght, windowSize.height() - 2);     // paint y-axis
     }
-    painter.end();    
+    painter.end();
 }
 
 //*************************************************************************************************************************************
@@ -1186,14 +1198,14 @@ void AtomSumWindow::paint_atom_sum(MatrixXd atom_matrix, QSize windowSize, qreal
                 // append scaled signalpoints and paint signal
                 for(qint32 channel = 0; channel < atom_matrix.cols(); channel++)    // over all Channels
                 {
-                    QPolygonF poly;                   
+                    QPolygonF poly;
                     for(qint32 h = 0; h < atom_matrix.rows(); h++)
                         poly.append(QPointF((h * scaleX) + maxStrLenght, -(atom_matrix(h, channel) * scaleY + _x_axis_height)));
                     QPen pen(_colors.at(channel), 0.5, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin);
                     painter.setPen(pen);
                     painter.drawPolyline(poly);
-                }                
-                // paint x-axis                
+                }
+                // paint x-axis
                 for(qint32 j = 1; j < 21; j++)
                 {
                     if(fmod(j, 4.0) == 0)   //draw light grey sectors
@@ -1217,7 +1229,7 @@ void AtomSumWindow::paint_atom_sum(MatrixXd atom_matrix, QSize windowSize, qreal
 
             signalNegativeMaximum++;
         }
-        painter.drawLine(maxStrLenght, 2, maxStrLenght, windowSize.height() - 2);     // paint y-axis      
+        painter.drawLine(maxStrLenght, 2, maxStrLenght, windowSize.height() - 2);     // paint y-axis
     }
     painter.end();
 }
@@ -1263,7 +1275,7 @@ void ResiduumWindow::paint_residuum(MatrixXd residuum_matrix, QSize windowSize, 
                 // append scaled signalpoints and paint signal
                 for(qint32 channel = 0; channel < residuum_matrix.cols(); channel++)    // over all Channels
                 {
-                    QPolygonF poly;                    
+                    QPolygonF poly;
                     for(qint32 h = 0; h < residuum_matrix.rows(); h++)
                         poly.append(QPointF(h * scaleX + maxStrLenght,  - (residuum_matrix(h, channel) * scaleY + _x_axis_height)));
                     QPen pen(_colors.at(channel), 0.5, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin);
@@ -1279,7 +1291,7 @@ void ResiduumWindow::paint_residuum(MatrixXd residuum_matrix, QSize windowSize, 
                         painter.setPen(pen);
                         painter.drawLine(j * scaleXAchse + maxStrLenght, -(_x_axis_height - windowSize.height()),
                                          j * scaleXAchse + maxStrLenght, -(_x_axis_height + windowSize.height()));   // scalelines x-axis
-                    }                   
+                    }
                     QPen pen(Qt::black, 1, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin);
                     painter.setPen(pen);
                     painter.drawLine(j * scaleXAchse + maxStrLenght, -(_x_axis_height - 2),
@@ -1434,7 +1446,7 @@ void MainWindow::on_btt_Calc_clicked()
         has_warning = false;
 
         _residuum_matrix = _signal_matrix;
-        _atom_sum_matrix = MatrixXd::Zero(_signal_matrix.rows(), _signal_matrix.cols());      
+        _atom_sum_matrix = MatrixXd::Zero(_signal_matrix.rows(), _signal_matrix.cols());
         callAtomSumWindow->update();
         callResidumWindow->update();
 
@@ -1468,7 +1480,7 @@ void MainWindow::on_btt_Calc_clicked()
             ui->tbv_Results->setColumnWidth(4,50);
 
             calc_adaptiv_mp(_signal_matrix, criterion);
-        }        
+        }
         is_calulating = true;
     }
     //cancel calculation thread
@@ -1959,7 +1971,7 @@ void MainWindow::calc_thread_finished()
     ui->cb_channels->setEnabled(true);
     ui->cb_all_select->setEnabled(true);
     ui->dsb_from->setEnabled(true);
-    ui->dsb_to->setEnabled(true);    
+    ui->dsb_to->setEnabled(true);
 
     QList<qint32> sizes = ui->splitter->sizes();
     sizes.insert(0, max_tbv_header_width + 100);
@@ -2078,24 +2090,24 @@ void MainWindow::calc_adaptiv_mp(MatrixXd signal, truncation_criterion criterion
     qreal fullcontraction = settings.value("adaptive_fullcontraction", 0.50).toDouble();
     switch(criterion)
     {
-        case Iterations:        
+        case Iterations:
             emit send_input(signal, ui->sb_Iterations->value(), qreal(MININT32), fixphase, boost, iterations,
                             reflection, expansion, contraction, fullcontraction, trial_separation);
-            mp_Thread->start();        
+            mp_Thread->start();
             break;
 
-        case SignalEnergy:        
+        case SignalEnergy:
             emit send_input(signal, MAXINT32, res_energy, fixphase, boost, iterations,
                             reflection, expansion, contraction, fullcontraction, trial_separation);
-            mp_Thread->start();        
+            mp_Thread->start();
             break;
 
         case Both:
             emit send_input(signal, ui->sb_Iterations->value(), res_energy, fixphase, boost, iterations,
                             reflection, expansion, contraction, fullcontraction, trial_separation);
-            mp_Thread->start();        
+            mp_Thread->start();
             break;
-    }       
+    }
 }
 
 //************************************************************************************************************************************
@@ -2107,7 +2119,7 @@ void MainWindow::calc_fix_mp(QString path, MatrixXd signal, truncation_criterion
 
     //threading
     mp_Thread = new QThread;
-    fixDict_Mp->moveToThread(mp_Thread);    
+    fixDict_Mp->moveToThread(mp_Thread);
 
     connect(this, SIGNAL(send_input_fix_dict(MatrixXd, qint32, qreal, qint32, QString, qreal)),
             fixDict_Mp, SLOT(recieve_input(MatrixXd, qint32, qreal, qint32, QString, qreal)));
@@ -2232,7 +2244,7 @@ QString MainWindow::create_display_text(FixDictAtom global_best_matching)
 
 // Opens Dictionaryeditor
 void MainWindow::on_actionW_rterbucheditor_triggered()
-{        
+{
     if(_editor_window == NULL)
     {
         _editor_window = new EditorWindow();
@@ -2356,7 +2368,7 @@ void MainWindow::on_dsb_sample_rate_editingFinished()
 //*****************************************************************************************************************
 
 void MainWindow::on_dsb_from_editingFinished()
-{   
+{
     if(read_fiff_changed || _from == last_from) return;
     if(ui->dsb_from->value() * _sample_rate < _first_sample)
         ui->dsb_from->setValue(_first_sample / _sample_rate + _offset_time);
@@ -2626,7 +2638,7 @@ void MainWindow::on_actionSpeicher_triggered()
 //*****************************************************************************************************************
 
 void MainWindow::on_actionSpeicher_unter_triggered()
-{  
+{
     QString save_name = "";
     QStringList saveList = file_name.split('/').last().split('.').first().split('_');
     for(int i = 0; i < saveList.length(); i++)
@@ -2717,7 +2729,7 @@ void MainWindow::recieve_save_progress(qint32 current_progress, qint32 finished)
 
     else    //save is successfully finished
     {
-        ui->progress_bar_save->setHidden(true);        
+        ui->progress_bar_save->setHidden(true);
         ui->actionSpeicher->setEnabled(true);
         ui->actionSpeicher_unter->setEnabled(true);
 
@@ -2869,7 +2881,7 @@ void SaveFifFile::save_fif_file(QString source_path, QString save_path, fiff_int
                             else  matlab_stream << QString::number(original_signal(sample, channel)) << ",";
                         matlab_stream<< "\n";
                         channel_index++;
-                    }                            
+                    }
                     else //no changes in this channel, just save original channel
                     {
                         for(qint32 sample = 0; sample < original_signal.rows(); sample++)
@@ -2967,7 +2979,7 @@ void MainWindow::save_parameters()
                     xmlWriter.writeAttribute("phase", QString::number(fix_atom.gabor_atom.phase));
                 }
                 else if(fix_atom.type == CHIRPATOM)
-                {                   
+                {
                     xmlWriter.writeAttribute("scale", QString::number(fix_atom.chirp_atom.scale));
                     xmlWriter.writeAttribute("translation", QString::number(fix_atom.translation));
                     xmlWriter.writeAttribute("modulation", QString::number(fix_atom.chirp_atom.modulation));
@@ -2975,7 +2987,7 @@ void MainWindow::save_parameters()
                     xmlWriter.writeAttribute("chirp", QString::number(fix_atom.chirp_atom.chirp));
                 }
                 else if(fix_atom.type == FORMULAATOM)
-                {                    
+                {
                     xmlWriter.writeAttribute("translation", QString::number(fix_atom.translation));
                     xmlWriter.writeAttribute("a", QString::number(fix_atom.formula_atom.a));
                     xmlWriter.writeAttribute("b", QString::number(fix_atom.formula_atom.b));
@@ -3428,24 +3440,18 @@ void MainWindow::on_actionTFplot_triggered()
 
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
-    if(index == 0)
-    {
-         if(last_topoplot_widget != NULL) delete last_topoplot_widget;
-    }
     if(index == 1)
     {
        //ToDo: m_tfPlotScene->fitInView();
-       if(last_topoplot_widget != NULL) delete last_topoplot_widget;
     }
     else if(index == 2)
     {
-       initTopoPlot();
+        initTopoPlot();
     }
     else if(index >= 3)
     {
-        if(last_topoplot_widget != NULL) delete last_topoplot_widget;
-        if(tbv_is_loading) return;       
-        atom_map_selection_changed();        
+        if(tbv_is_loading) return;
+        atom_map_selection_changed();
     }
 }
 
@@ -3498,7 +3504,7 @@ void MainWindow::onComboBoxLayoutChanged()
 //*************************************************************************************************************
 
 bool MainWindow::loadLayout(QString path)
-{    
+{
     bool state = LayoutLoader::readMNELoutFile(path, m_layoutMap);
 
     QStringList bad;
@@ -3604,10 +3610,6 @@ void MainWindow::updateTFScene()
 
      if(_signal_matrix.isZero())
      {
-         QGraphicsView * view = new QGraphicsView();
-         topoLayout->removeWidget(last_topoplot_widget);
-         topoLayout->addWidget(view);
-         last_topoplot_widget = view;
          return;
      }
 
@@ -3622,32 +3624,24 @@ void MainWindow::updateTFScene()
      MatrixXd topoMatrix = tplot.createTopoMatrix(_signal_matrix, topoMap, topoSize, 0);
 
      // draw
-     TFplot *plot = new TFplot();
-     QLabel *lab = new QLabel();
-     lab->setAlignment(Qt::AlignCenter);
-     QImage *image = plot->creatTFPlotImage(topoMatrix, topoSize, Jet);
+     QImage *image = tplot.creatPlotImage(topoMatrix, topoSize, Jet);
      *image = image->scaledToHeight(ui->tabWidget->height() * 0.89, Qt::FastTransformation);
-     lab->setPixmap(QPixmap::fromImage(*image));
-     topoLayout->removeWidget(last_topoplot_widget);
-     topoLayout->addWidget(lab);
+     topoLabel->setPixmap(QPixmap::fromImage(*image));
      if(image != NULL) delete image;
-     last_topoplot_widget = lab;
+
+     repaint();
      topoMatrix.resize(0,0);
- }
+}
 
 //*************************************************************************************************************
 
 void MNEMatchingPursuit::MainWindow::on_btt_playtopo_clicked()
 {
-    QLabel *lab;
     Tpplot tplot;
-    QImage *image;
-    MatrixXd topoMatrix;
     QSize topoSize(64, 64);
-    TFplot *plot = new TFplot();
     qint32 scaleHeight = ui->tabWidget->height() * 0.89;
-    QString endSample = QString::number(_signal_matrix.rows() - 1, 'f', 0);
-    QString endTime = QString::number((_to / _sample_rate) + _offset_time, 'f', 4);
+    play_TopoPlot = new PlayTopoPlot();
+    play_topo_Thread = new QThread;
 
     ui->lb_topotime->setAlignment(Qt::AlignRight);
     ui->btt_playtopo->setIcon(QIcon(":/images/icons/stop.png"));
@@ -3664,39 +3658,57 @@ void MNEMatchingPursuit::MainWindow::on_btt_playtopo_clicked()
     }
     QMap<QString, QPointF> topoMap = tplot.createMapGrid(selLayoutMap, topoSize);
 
-    for(qint32 time = 0; time < _signal_matrix.rows(); time++)
-    {
-        lab = new QLabel();
-        lab->setAlignment(Qt::AlignCenter);
+    //threading
+    play_TopoPlot->moveToThread(play_topo_Thread);
 
-        topoMatrix = tplot.createTopoMatrix(_signal_matrix, topoMap, topoSize, time);
-        image = plot->creatTFPlotImage(topoMatrix, topoSize, Jet);
-        *image = image->scaledToHeight(scaleHeight, Qt::FastTransformation);
-        lab->setPixmap(QPixmap::fromImage(*image));
-        topoLayout->replaceWidget(last_topoplot_widget, lab);
-        if(last_topoplot_widget != NULL) delete last_topoplot_widget;
-        if(image != NULL) delete image;
-        last_topoplot_widget = lab;
+    connect(this, SIGNAL(send_play_input(topo_map ,MatrixXd, QSize, qint32, qint32)),
+            play_TopoPlot, SLOT(play_tplot(topo_map, MatrixXd, QSize, qint32, qint32)));
 
-        ui->sli_topoTime->setValue(time);
-        ui->lb_topotime->setText("sample: " + QString::number(time, 'f', 0) + " / " + endSample +
-                                 "  time: " + QString::number((_from + time) / _sample_rate + _offset_time, 'f', 4) + " / " + endTime + "sec");
-        qApp->processEvents();
-        repaint();
-        Sleep(20);
-    }
+    connect(play_TopoPlot, SIGNAL(send_view(QImage*, qint32)),
+                 this, SLOT(recieve_view(QImage*, qint32)));
 
-    ui->btt_playtopo->setIcon(QIcon(":/images/icons/play.png"));
+    emit send_play_input(topoMap,_signal_matrix, topoSize, 0, scaleHeight);
+    play_topo_Thread->start();
+
+    //ui->btt_playtopo->setIcon(QIcon(":/images/icons/play.png"));
 }
 
-
-void PlayTopoPlot::play_topoplot()
+void MainWindow::recieve_view(QImage *image, qint32 play_time)
 {
+    QString endSample = QString::number(_signal_matrix.rows() - 1, 'f', 0);
+    QString endTime = QString::number((_to / _sample_rate) + _offset_time, 'f', 4);
 
+    topoLabel->setPixmap(QPixmap::fromImage(*image));
+    if(image != NULL) delete image;
+
+    ui->sli_topoTime->setValue(play_time);
+    ui->lb_topotime->setText("sample: " + QString::number(play_time, 'f', 0) + " / " + endSample +
+                             "  time: " + QString::number((_from + play_time) / _sample_rate + _offset_time, 'f', 4) + " / " + endTime + "sec");
+
+    repaint();
+    Sleep(20);
 }
 
+//*************************************************************************************************************
 
-void PlayTopoPlot::paused_topoplot()
+void PlayTopoPlot::play_tplot(topo_map topoMap, MatrixXd signalMatrix, QSize topoSize, qint32 play_time, qint32 scaleHeight)
+{
+    Tpplot tplot;
+    QImage *image;
+    MatrixXd topoMatrix;
+
+    for(qint32 time = play_time; time < signalMatrix.rows(); time++)
+    {
+        topoMatrix = tplot.createTopoMatrix(signalMatrix, topoMap, topoSize, time);
+        image = tplot.creatPlotImage(topoMatrix, topoSize, Jet);
+        *image = image->scaledToHeight(scaleHeight, Qt::FastTransformation);
+        emit(send_view(image,  time));
+    }
+}
+
+//*************************************************************************************************************
+
+void PlayTopoPlot::paused_topoplot(qint32 time)
 {
 
 }

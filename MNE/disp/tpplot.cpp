@@ -139,6 +139,64 @@ MatrixXd Tpplot::createTopoMatrix(MatrixXd signal, QMap<QString,QPointF> mapGrid
     return tp_map;
 }
 
+//*************************************************************************************************************
+
+QImage * Tpplot::creatPlotImage(MatrixXd tf_matrix, QSize imageSize, ColorMaps cmap)
+{
+    //normalisation of the tf-matrix
+    qreal norm1 = tf_matrix.maxCoeff();
+    qreal mnorm = tf_matrix.minCoeff();
+    if(abs(mnorm) > norm1) norm1 = mnorm;
+    tf_matrix /= norm1;
+
+    qint32 y_factor =  tf_matrix.rows() / imageSize.height();
+    qint32 x_factor =  tf_matrix.cols() / imageSize.width();
+    if(y_factor == 0) y_factor = 1;
+    if(x_factor == 0) x_factor = 1;
+
+    //setup image
+    QImage * image_to_tf_plot = new QImage(imageSize, QImage::Format_RGB32);
+
+    //setup pixelcolors in image
+    QColor color;
+    qint32 ximage = 0;
+    qint32 yimage = 0;
+
+    for ( qint32 y = 0; y < tf_matrix.rows(); y = y + y_factor)
+    {
+        ximage = 0;
+        for ( qint32 x = 0; x < tf_matrix.cols(); x = x + x_factor )
+        {
+            switch  (cmap)
+            {
+            case Jet:
+                color.setRgb(ColorMap::valueToJet(abs(tf_matrix(y, x))));
+                break;
+            case Hot:
+                color.setRgb(ColorMap::valueToHot(abs(tf_matrix(y, x))));
+                break;
+            case HotNeg1:
+                color.setRgb(ColorMap::valueToHotNegative1(abs(tf_matrix(y, x))));
+                break;
+            case HotNeg2:
+                color.setRgb(ColorMap::valueToHotNegative2(abs(tf_matrix(y, x))));
+                break;
+            case Bone:
+                color.setRgb(ColorMap::valueToBone(abs(tf_matrix(y, x))));
+                break;
+            case RedBlue:
+                color.setRgb(ColorMap::valueToRedBlue(abs(tf_matrix(y, x))));
+                break;
+            }
+            if(ximage < image_to_tf_plot->width() && yimage < image_to_tf_plot->height())
+                image_to_tf_plot->setPixel(ximage, image_to_tf_plot->height() - 1 - yimage,  color.rgb());
+            ximage++;
+        }
+        yimage++;
+    }
+    return image_to_tf_plot;
+}
+
 
 
 
