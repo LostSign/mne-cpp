@@ -40,6 +40,7 @@
 #include "tpplot.h"
 #include "math.h"
 #include <limits>
+#include <iostream>
 
 
 //*************************************************************************************************************
@@ -195,6 +196,89 @@ QImage * Tpplot::creatPlotImage(MatrixXd tf_matrix, QSize imageSize, ColorMaps c
         yimage++;
     }
     return image_to_tf_plot;
+}
+
+MatrixXd Tpplot::calcSplineInterpolation(MatrixXd topoMatrix)
+{
+    typedef Spline<double,2> Spline2d;
+    typedef Spline2d::PointType PointType;
+    typedef Spline2d::ControlPointVectorType ControlPointVectorType;
+    MatrixXd splineResultMatrix(topoMatrix.cols(), topoMatrix.rows());
+
+    for(qint32 j = 0; j < topoMatrix.rows(); j++)
+    {
+        qint32 gridPoints = 0;
+        for(qint32 i = 0; i < topoMatrix.cols(); i++)
+        {
+
+            if(topoMatrix(i, j) != 0)
+                gridPoints++;
+        }
+
+        if(gridPoints != 0)
+        {
+            VectorXd xvals(1);
+            VectorXd yvals(1);
+
+            if(gridPoints == 1)
+            {
+                xvals.resize(3);
+                yvals.resize(3);
+                for(qint32 i = 0; i < topoMatrix.cols(); i++)
+                    if(topoMatrix(i, j) != 0)
+                    {
+                        xvals[1] = i;
+                        yvals[1] = topoMatrix(i, j);
+                    }
+
+                xvals[0] = 0;
+                yvals[0] = 0;
+                xvals[2] = 0;
+                yvals[2] = 0;
+            }
+            else
+            {
+                xvals.resize(gridPoints);
+                yvals.resize(gridPoints);
+
+                qint32 valsIndex = 0;
+                for(qint32 i = 0; i < topoMatrix.cols(); i++)
+                    if(topoMatrix(i, j) != 0)
+                    {
+                        xvals[valsIndex] = i;
+                        yvals[valsIndex] = topoMatrix(i, j);
+                        valsIndex++;
+                    }
+            }
+
+            std::cout << xvals << " --- " << std::endl;
+            std::cout << yvals << std::endl;
+            //std::cout << yvals[1] << "---";
+            //std::cout << yvals[1] << "---";
+
+            ControlPointVectorType points(2,xvals.rows());
+            points.row(0) = xvals;
+            points.row(1) = yvals;
+            const Spline2d spline = SplineFitting<Spline2d>::Interpolate(points,3);
+
+
+            qint32 index = 0;
+            for(qreal u = 0; u <= 1; u+=1.0 /(topoMatrix.cols() - 1))
+            {
+                PointType y = spline(u);
+                std::cout << "(" << u << ":" << y(0,0) << "," << y(1,0) << ") " << std::endl;
+                splineResultMatrix(index, j) = y(1, 0);
+                index++;
+            }            
+        }
+        else
+        {
+            std::cout << "Nullzeile" << std::endl;
+            for(int i = 0; i < splineResultMatrix.cols(); i++)
+                splineResultMatrix(i, j) = 0;
+        }
+    }
+    return splineResultMatrix;
 }
 
 

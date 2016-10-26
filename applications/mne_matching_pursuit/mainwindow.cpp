@@ -3623,6 +3623,8 @@ void MainWindow::updateTFScene()
      QMap<QString, QPointF> topoMap = tplot.createMapGrid(selLayoutMap, topoSize);
      MatrixXd topoMatrix = tplot.createTopoMatrix(_signal_matrix, topoMap, topoSize, 0);
 
+     topoMatrix = tplot.calcSplineInterpolation(topoMatrix);
+
      // draw
      QImage *image = tplot.creatPlotImage(topoMatrix, topoSize, Jet);
      *image = image->scaledToHeight(ui->tabWidget->height() * 0.89, Qt::FastTransformation);

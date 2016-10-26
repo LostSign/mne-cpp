@@ -62,6 +62,7 @@
 #include <Eigen/Core>
 #include <Eigen/SparseCore>
 #include <unsupported/Eigen/FFT>
+#include <unsupported/Eigen/Splines>
 
 namespace DISPLIB
 {
@@ -82,6 +83,7 @@ public:
     MatrixXd normSignal(MatrixXd signalMatrix);
     MatrixXd createTopoMatrix(MatrixXd normSignal, QMap<QString, QPointF> mapGrid, QSize topo_matrix_size, qreal timeSample);    
     QImage * creatPlotImage(MatrixXd tf_matrix, QSize imageSize, ColorMaps cmap);
+    MatrixXd calcSplineInterpolation(MatrixXd topoMatrix);
 };
 
 }
