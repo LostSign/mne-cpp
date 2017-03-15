@@ -130,6 +130,7 @@ MainWindow::MainWindow(QWidget *parent) :    QMainWindow(parent),    ui(new Ui::
 {
     ui->setupUi(this);
     auto_change = false;
+    auto_change = false;
     all_select_change = false;
 
     this->setMinimumSize(1280, 640);
