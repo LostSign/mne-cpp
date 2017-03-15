@@ -46,14 +46,20 @@
 //=============================================================================================================
 
 #include <mne/mne.h>
-#include <disp/plot.h>
-#include <disp/helpers/colormap.h>
+
 #include <utils/spectrogram.h>
+#include <utils/layoutloader.h>
 #include <utils/mp/atom.h>
 #include <utils/mp/adaptivemp.h>
 #include <utils/mp/fixdictmp.h>
-#include <disp/tfplot.h>
 
+#include <disp/tfplot.h>
+#include <disp/tpplot.h>
+#include <disp/plot.h>
+#include <disp/helpers/colormap.h>
+#include <disp/helpers/tfplotscene.h>
+
+#include "ui_mainwindow.h"
 #include "editorwindow.h"
 #include "ui_editorwindow.h"
 #include "formulaeditor.h"
@@ -68,6 +74,8 @@
 #include "ui_treebaseddictwindow.h"
 #include "settingwindow.h"
 #include "ui_settingwindow.h"
+
+
 
 //*************************************************************************************************************
 //=============================================================================================================
@@ -108,10 +116,13 @@ using namespace DISPLIB;
 
 //=============================================================================================================
 
-namespace Ui
+//*************************************************************************************************************
+//=============================================================================================================
+// DEFINE NAMESPACE MNEMatchingPursuit
+//=============================================================================================================
+
+namespace MNEMatchingPursuit
 {
-    class MainWindow;
-}
 
 
 enum truncation_criterion
@@ -132,7 +143,6 @@ class GraphWindow;
 class ResiduumWindow;
 class AtomSumWindow;
 class XAxisWindow;
-class tfplotwidget;
 
 class MainWindow : public QMainWindow, ColorMap
 {
@@ -148,8 +158,10 @@ public:
     typedef QList<QList<GaborAtom> > adaptive_atom_list;
     typedef QList<FixDictAtom> fix_dict_atom_list;
     typedef QMap<qint32, bool> select_map;
+    typedef QMap<QString,QPointF> topo_map;
     typedef Eigen::VectorXd VectorXd;
-    typedef Eigen::RowVectorXi RowVectorXi;    
+    typedef Eigen::RowVectorXi RowVectorXi;
+    typedef TFPlotSceneItem TFSceneItem;
 
 
 private slots:
@@ -541,14 +553,129 @@ private slots:
     void recieve_save_progress(qint32 current_progress, qint32 finished);
 
     //==========================================================================================================
-
+    /**
+    * on_dsb_energy_valueChanged
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
     void on_dsb_energy_valueChanged(double arg1);
+
+    //==========================================================================================================
+    /**
+    * on_actionBeenden_triggered
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
     void on_actionBeenden_triggered();
+
+    //==========================================================================================================
+    /**
+    * on_mouse_button_release
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
     void on_mouse_button_release();
+
+    //==========================================================================================================
+    /**
+    * on_rb_OwnDictionary_clicked
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
     void on_rb_OwnDictionary_clicked();
-    void on_extend_tab_button();
-    void on_close_tab_button(int index);
+
+    //==========================================================================================================
+    /**
+    * on_actionTFplot_triggered
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
     void on_actionTFplot_triggered();
+
+    //==========================================================================================================
+    /**
+    * on_tabWidget_currentChanged
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
+    void on_tabWidget_currentChanged(int index);
+
+    //==========================================================================================================
+    /**
+    * onComboBoxLayoutChanged
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
+    void onComboBoxLayoutChanged();
+
+    //==========================================================================================================
+    /**
+    * recieve_current_item
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
+    void recieve_current_item(TFSceneItem * item);
+
+    //==========================================================================================================
+    /**
+    * closeTab
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
+    void closeTab(int tabIndex);
+
+    //==========================================================================================================
+    /**
+    * on_btt_playtopo_clicked
+    *
+    * ### MP toolbox main window slots ###
+    *
+    *
+    *
+    * @return void
+    */
+    void on_btt_playtopo_clicked();
+
+    void recieve_view(QImage *image, qint32 play_time);
+
+    //==========================================================================================================
+
 
 signals:
 
@@ -557,6 +684,7 @@ signals:
     void send_input_fix_dict(MatrixXd send_signal, qint32 send_max_iterations, qreal send_epsilon, qint32 boost, QString path, qreal delta);
     void to_save(QString source_path, QString save_path, fiff_int_t start_change, fiff_int_t end_change, MatrixXd changes, MatrixXd original_signal, select_map select_channel_map, RowVectorXi picks, source_file_type file_type);
     void kill_save_thread();
+    void send_play_input(topo_map topoMap, MatrixXd signalMatrix, QSize mapSize, qint32 play_time, qint32 scaleHeigh);
 
 private:
 
@@ -565,6 +693,7 @@ private:
     bool is_save_white;
     bool tbv_is_loading;
     bool auto_change;
+    bool all_select_change; //if all atoms selected, selected_atom_map doesn´t change
     bool was_partialchecked;
     bool read_fiff_changed;
     bool is_white;
@@ -584,6 +713,7 @@ private:
     QString last_save_path;
     QMap<qint32, bool> select_channel_map;
     QMap<qint32, bool> select_atoms_map;
+    QMap<qint32, bool> all_select_atoms_map;
     QList<QColor> original_colors;
     QList<QList<GaborAtom> > _adaptive_atom_list;
     QList<FixDictAtom> _fix_dict_atom_list;
@@ -594,7 +724,7 @@ private:
     MatrixXd reference_matrix;
     MatrixXd real_residuum_matrix;
     QTime counter_time;
-    Ui::MainWindow *ui;    
+    Ui::MainWindow *ui;
     GraphWindow *callGraphWindow;
     AtomSumWindow *callAtomSumWindow;
     ResiduumWindow *callResidumWindow;
@@ -605,11 +735,22 @@ private:
     RowVectorXi picks;
     FiffInfo pick_info;
     QPalette pal;
-
-    QTimer *_counter_timer;
-    QThread* mp_Thread;
+    QTimer *counter_timer;
+    QLabel * topoLabel;
+    /*
+    QThread *mp_Thread;
+    QThread *play_topo_Thread;
+    PlayTopoPlot *play_TopoPlot;
     AdaptiveMp *adaptive_Mp;
     FixDictMp *fixDict_Mp ;
+    */
+
+    QMap<QString,QPointF>           m_layoutMap;                         /**< QMap with the loaded layout. each channel name correspond to a QPointF variable. */
+    TFPlotScene*                 m_tfPlotScene;                          /**< Pointer to the selection scene class. */
+    QList<TFPlotItemStruct> m_tfPlotItemStructList;
+    QStringList             m_mappedLayoutChNames;                       /**< list of the mapped layout channel names. */
+
+
 
     //==========================================================================================================
     /**
@@ -844,7 +985,78 @@ private:
     static bool sort_energy_fix(const FixDictAtom atom_1, const FixDictAtom atom_2);
 
     //==========================================================================================================
+    /**
+    * MainWindow_atom_map_selection_changed
+    *
+    * ### MP toolbox main function ###
+    *
+    * prepares update for painting if selection of atoms changes
+    *
+    */
+    void MainWindow::atom_map_selection_changed();
+
+    //==========================================================================================================
+    /**
+    * initComboBoxes
+    *
+    * ### MP toolbox main function ###
+    *
+    * initialized Combobox for electodes layout
+    *
+    */
+    void initComboBoxes();
+
+    //==========================================================================================================
+    /**
+    * loadLayout
+    *
+    * ### MP toolbox main function ###
+    *
+    * load the electodes layout
+    *
+    */
+    bool loadLayout(QString path);
+
+    //==========================================================================================================
+    /**
+    * initTFPlotSceneView
+    *
+    * ### MP toolbox main function ###
+    *
+    * initialized Time-Frequentcy-Scene
+    *
+    */
+    void initTFPlotSceneView();
+
+    //==========================================================================================================
+    /**
+    * updateTFScene
+    *
+    * ### MP toolbox main function ###
+    *
+    * prepares update for Time-Frequentcy-Scene
+    *
+    */
+    void updateTFScene();
+
+    //==========================================================================================================
+    /**
+    * initTopoPlot
+    *
+    * ### MP toolbox main function ###
+    *
+    * initialized topoplot
+    *
+    */
+    void initTopoPlot();
+
+    //=========================================================================================================
+
+
 };
+
+
+
 
 //*************************************************************************************************************
 // Widget to paint inputsignal
@@ -883,6 +1095,9 @@ signals:
    //==========================================================================================================
 };
 
+
+
+
 //*************************************************************************************************************
 // Widget to paint atoms
 class AtomSumWindow : public QWidget
@@ -914,6 +1129,9 @@ public:
    //==========================================================================================================
 };
 
+
+
+
 //*************************************************************************************************************
 // Widget to paint residuum
 class ResiduumWindow : public QWidget
@@ -926,7 +1144,7 @@ class ResiduumWindow : public QWidget
 
 public:
     //=========================================================================================================
-    /**    
+    /**
     * ResiduumWindow_paint_residuum
     *
     * ### MP toolbox GUI function ###
@@ -944,6 +1162,9 @@ public:
 
     //=========================================================================================================
 };
+
+
+
 
 // Widget to paint x-axis
 class XAxisWindow : public QWidget
@@ -972,6 +1193,9 @@ public:
    //==========================================================================================================
 };
 
+
+
+
 //save fif file class
 class SaveFifFile : public QThread
 {
@@ -984,7 +1208,6 @@ class SaveFifFile : public QThread
 
 public:
     SaveFifFile();
-
     ~SaveFifFile();
 
 private slots:
@@ -1004,6 +1227,41 @@ signals:
     void save_progress(qint32 current_progress, qint32 finished);
 
 };
+
+
+
+
+//play topoplot class
+class PlayTopoPlot : public QThread
+{
+    Q_OBJECT
+
+    typedef QMap<QString,QPointF> topo_map;
+
+public:
+    PlayTopoPlot();
+    ~PlayTopoPlot();
+
+public slots:
+    //==========================================================================================================
+    /**
+    * play_topoplot
+    *
+    * ### MP toolbox main function ###
+    *
+    * playing the topoplot
+    *
+    * @return   void
+    */
+    void play_tplot(topo_map topoMap, MatrixXd signalMatrix, QSize topoSize, qint32 play_time, qint32 scaleHeight);
+    void paused_topoplot(qint32 time);
+
+signals:
+    void send_view(QImage *image, qint32 play_time);
+
+};
+
+}
 
 //*************************************************************************************************************
 

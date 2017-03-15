@@ -64,6 +64,7 @@
 // USED NAMESPACES
 //=============================================================================================================
 
+using namespace MNEMatchingPursuit;
 using namespace UTILSLIB;
 
 TreebasedDictWindow::TreebasedDictWindow(QWidget *parent)

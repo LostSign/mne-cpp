@@ -1,15 +1,14 @@
 //=============================================================================================================
 /**
-* @file     deletemessagebox.cpp
+* @file     tpplot.cpp
 * @author   Martin Henfling <martin.henfling@tu-ilmenau.de>;
 *           Daniel Knobl <daniel.knobl@tu-ilmenau.de>;
-*           Sebastian Krause <sebastian.krause@tu-ilmenau.de>
 * @version  1.0
-* @date     July, 2014
+* @date     September, 2015
 *
 * @section  LICENSE
 *
-* Copyright (C) 2014, Martin Henfling, Daniel Knobl and Sebastian Krause. All rights reserved.
+* Copyright (C) 2014, Martin Henfling and Daniel Knobl. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that
 * the following conditions are met:
@@ -30,81 +29,63 @@
 * POSSIBILITY OF SUCH DAMAGE.
 *
 *
-* @brief    Implementation of the DeleteMesssageBox Class.
-*
+* @brief    Declaration of topo plot class.
 */
 
+#ifndef TPPLOT_H
+#define TPPLOT_H
 
 //*************************************************************************************************************
 //=============================================================================================================
 // INCLUDES
 //=============================================================================================================
 
-#include "ui_deletemessagebox.h"
-#include "deletemessagebox.h"
-#include "QtGui"
+#include "disp_global.h"
+#include <disp/helpers/colormap.h>
+
+//*************************************************************************************************************
+//=============================================================================================================
+// Qt INCLUDES
+//=============================================================================================================
+
+#include <QImage>
+#include <QGridLayout>
+#include <QGraphicsView>
+#include <QGraphicsPixmapItem>
+#include <QGraphicsSceneResizeEvent>
+
+//*************************************************************************************************************
+//=============================================================================================================
+// Eigen INCLUDES
+//=============================================================================================================
+
+#include <Eigen/Core>
+#include <Eigen/SparseCore>
+#include <unsupported/Eigen/FFT>
+#include <unsupported/Eigen/Splines>
+
+namespace DISPLIB
+{
 
 //*************************************************************************************************************
 //=============================================================================================================
 // USED NAMESPACES
 //=============================================================================================================
 
-using namespace MNEMatchingPursuit;
+using namespace Eigen;
 
-//=============================================================================================================
-
-QString parentName;
-
-//*************************************************************************************************************************************
-
-// CONSTRUCTOR
-DeleteMessageBox::DeleteMessageBox(QWidget *parent) :    QDialog(parent),    ui(new Ui::DeleteMessageBox)
+class DISPSHARED_EXPORT Tpplot
 {
-    parentName =  parent->accessibleName();
-    ui->setupUi(this);
+public:
+    Tpplot();
+
+    QMap<QString,QPointF> createMapGrid(QMap<QString,QPointF> layoutMap, QSize topo_matrix_size);
+    MatrixXd normSignal(MatrixXd signalMatrix);
+    MatrixXd createTopoMatrix(MatrixXd normSignal, QMap<QString, QPointF> mapGrid, QSize topo_matrix_size, qreal timeSample);    
+    QImage * creatPlotImage(MatrixXd tf_matrix, QSize imageSize, ColorMaps cmap);
+    MatrixXd calcSplineInterpolation(MatrixXd topoMatrix);
+};
+
 }
 
-//*************************************************************************************************************************************
-
-DeleteMessageBox::DeleteMessageBox(QString msg_text, QString caption, QString btt_left_text, QString btt_right_text, QWidget *parent)
-    :    QDialog(parent),    ui(new Ui::DeleteMessageBox)
-{
-    ui->setupUi(this);
-    ui->lb_MessageText->setText(msg_text);
-    ui->btt_yes->setText(btt_left_text);
-    ui->btt_No->setText(btt_right_text);
-    this->setWindowTitle(caption);
-}
-
-//*************************************************************************************************************************************
-
-DeleteMessageBox::~DeleteMessageBox()
-{
-    delete ui;
-}
-
-//*************************************************************************************************************************************
-
-void DeleteMessageBox::on_btt_yes_clicked()
-{
-    setResult(1);
-    hide();
-}
-
-//*************************************************************************************************************************************
-
-void DeleteMessageBox::on_btt_No_clicked()
-{
-    setResult(0);
-    hide();
-}
-
-//*************************************************************************************************************************************
-
-void DeleteMessageBox::on_chb_NoMessageBox_toggled(bool checked)
-{
-    QSettings settings;
-    settings.setValue("show_warnings", !checked);
-}
-
-//*************************************************************************************************************************************
+#endif // TPPLOT_H

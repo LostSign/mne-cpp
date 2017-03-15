@@ -47,6 +47,9 @@
 
 using namespace DISPLIB;
 
+TFplot::TFplot()
+{}
+
 TFplot::TFplot(MatrixXd tf_matrix, qreal sample_rate, qreal lower_frq, qreal upper_frq, ColorMaps cmap = Jet)
 {
     qreal max_frq = sample_rate/2.0;
@@ -65,8 +68,6 @@ TFplot::TFplot(MatrixXd tf_matrix, qreal sample_rate, qreal lower_frq, qreal upp
     qint32 upper_px = floor(upper_frq / frq_per_px);
 
     MatrixXd zoomed_tf_matrix = MatrixXd::Zero(upper_px-lower_px, tf_matrix.cols());
-    //How to print to console here
-    //printf(("fff   "+QString::number(zoomed_tf_matrix(12,12))).toUtf8().data());// << ";  " << zoomed_tf_matrix.rows(2) << ";   ";
 
     qint32 pxls = 0;
     for(qint32 it = lower_px; it < upper_px; it++)
@@ -78,13 +79,12 @@ TFplot::TFplot(MatrixXd tf_matrix, qreal sample_rate, qreal lower_frq, qreal upp
     //zoomed_tf_matrix = tf_matrix.block(tf_matrix.rows() - upper_px, 0, upper_px-lower_px, tf_matrix.cols());
 
     calc_plot(zoomed_tf_matrix, sample_rate, cmap, lower_frq, upper_frq);
-
 }
 
 //-----------------------------------------------------------------------------------------------------------------
 
 TFplot::TFplot(MatrixXd tf_matrix, qreal sample_rate, ColorMaps cmap = Jet)
-{   
+{
     calc_plot(tf_matrix, sample_rate, cmap, 0, 0);
 }
 
@@ -130,13 +130,11 @@ void TFplot::calc_plot(MatrixXd tf_matrix, qreal sample_rate, ColorMaps cmap, qr
             image_to_tf_plot->setPixel(x, tf_matrix.rows() - 1 -  y,  color.rgb());
         }
 
-    *image_to_tf_plot = image_to_tf_plot->scaled(tf_matrix.cols(), tf_matrix.cols()/2, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-    *image_to_tf_plot = image_to_tf_plot->scaledToWidth(/*0.9 **/ 1026, Qt::SmoothTransformation);
+    *image_to_tf_plot = image_to_tf_plot->scaledToWidth(900, Qt::SmoothTransformation);
     //image to pixmap
-    QGraphicsPixmapItem *tf_pixmap = new QGraphicsPixmapItem(QPixmap::fromImage(*image_to_tf_plot));
-    //tf_pixmap->setScale(100);
+    QGraphicsPixmapItem *tf_pixmap = new QGraphicsPixmapItem(QPixmap::fromImage(*image_to_tf_plot));    
     QGraphicsScene *tf_scene = new QGraphicsScene();
-    tf_scene->addItem(tf_pixmap);
+    tf_scene->addItem(tf_pixmap);    
 
     QImage * coeffs_image = new QImage(10, tf_matrix.rows(), QImage::Format_RGB32);
     qreal norm = tf_matrix.maxCoeff();
@@ -169,7 +167,6 @@ void TFplot::calc_plot(MatrixXd tf_matrix, qreal sample_rate, ColorMaps cmap, qr
         }
     }
 
-    *coeffs_image = coeffs_image->scaled(10, tf_matrix.cols()/2, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     *coeffs_image = coeffs_image->scaledToHeight(image_to_tf_plot->height(), Qt::SmoothTransformation);
 
     QLayout * layout = new QGridLayout();
@@ -262,7 +259,7 @@ void TFplot::calc_plot(MatrixXd tf_matrix, qreal sample_rate, ColorMaps cmap, qr
 
     QGraphicsPixmapItem * coeffs_item = tf_scene->addPixmap(QPixmap::fromImage(*coeffs_image));//addItem();
     coeffs_item->setParentItem(tf_pixmap);
-    coeffs_item->setPos(tf_pixmap->boundingRect().width() +5, 0);
+    coeffs_item->setPos(tf_pixmap->boundingRect().width() +5, 0);    
 
     QGraphicsSimpleTextItem *axis_name_item = new QGraphicsSimpleTextItem("coefficients", coeffs_item);
     QGraphicsSimpleTextItem *axis_zero_item = new QGraphicsSimpleTextItem("0", coeffs_item);
@@ -282,20 +279,79 @@ void TFplot::calc_plot(MatrixXd tf_matrix, qreal sample_rate, ColorMaps cmap, qr
 
     view->fitInView(layout->contentsRect(),Qt::KeepAspectRatio);
     layout->addWidget(view);
-    this->setLayout(layout);
-
+    this->setLayout(layout);   
 }
+
+//*************************************************************************************************************
+
+QImage * TFplot::creatTFPlotImage(MatrixXd tf_matrix, QSize imageSize, ColorMaps cmap)
+{
+    //normalisation of the tf-matrix
+    qreal norm1 = tf_matrix.maxCoeff();
+    qreal mnorm = tf_matrix.minCoeff();
+    if(abs(mnorm) > norm1) norm1 = mnorm;
+    tf_matrix /= norm1;
+
+    qint32 y_factor =  tf_matrix.rows() / imageSize.height();
+    qint32 x_factor =  tf_matrix.cols() / imageSize.width();
+    if(y_factor == 0) y_factor = 1;
+    if(x_factor == 0) x_factor = 1;
+
+    //setup image
+    QImage * image_to_tf_plot = new QImage(imageSize, QImage::Format_RGB32);
+
+    //setup pixelcolors in image
+    QColor color;
+    qint32 ximage = 0;
+    qint32 yimage = 0;
+
+    for ( qint32 y = 0; y < tf_matrix.rows(); y = y + y_factor)
+    {
+        ximage = 0;
+        for ( qint32 x = 0; x < tf_matrix.cols(); x = x + x_factor )
+        {
+            switch  (cmap)
+            {
+            case Jet:
+                color.setRgb(ColorMap::valueToJet(abs(tf_matrix(y, x))));
+                break;
+            case Hot:
+                color.setRgb(ColorMap::valueToHot(abs(tf_matrix(y, x))));
+                break;
+            case HotNeg1:
+                color.setRgb(ColorMap::valueToHotNegative1(abs(tf_matrix(y, x))));
+                break;
+            case HotNeg2:
+                color.setRgb(ColorMap::valueToHotNegative2(abs(tf_matrix(y, x))));
+                break;
+            case Bone:
+                color.setRgb(ColorMap::valueToBone(abs(tf_matrix(y, x))));
+                break;
+            case RedBlue:
+                color.setRgb(ColorMap::valueToRedBlue(abs(tf_matrix(y, x))));
+                break;
+            }
+            if(ximage < image_to_tf_plot->width() && yimage < image_to_tf_plot->height())
+                image_to_tf_plot->setPixel(ximage, image_to_tf_plot->height() - 1 - yimage,  color.rgb());
+            ximage++;
+        }
+        yimage++;
+    }  
+    return image_to_tf_plot;
+}
+
+//*************************************************************************************************************
 
 void TFplot::resizeEvent(QResizeEvent *event)
 {
-    Q_UNUSED(event);   
+    Q_UNUSED(event);
 
     QWidget *widget = this->layout()->itemAt(0)-> widget();
     if (widget != NULL )
     {
         QGraphicsView* view = (QGraphicsView*)widget;
+        QRectF rec = view->sceneRect();
         view->fitInView(view->sceneRect(),Qt::KeepAspectRatio);
     }
-
 }
 
