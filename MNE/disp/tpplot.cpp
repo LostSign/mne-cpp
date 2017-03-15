@@ -216,25 +216,55 @@ MatrixXd Tpplot::calcSplineInterpolation(MatrixXd topoMatrix)
         }
 
         if(gridPoints != 0)
-        {
-            VectorXd xvals(1);
-            VectorXd yvals(1);
+        {            
+            VectorXd xvals(4);
+            VectorXd yvals(4);
 
             if(gridPoints == 1)
             {
-                xvals.resize(3);
-                yvals.resize(3);
                 for(qint32 i = 0; i < topoMatrix.cols(); i++)
                     if(topoMatrix(i, j) != 0)
                     {
-                        xvals[1] = i;
-                        yvals[1] = topoMatrix(i, j);
+                        xvals[2] = i;
+                        yvals[2] = topoMatrix(i, j);
                     }
 
                 xvals[0] = 0;
                 yvals[0] = 0;
-                xvals[2] = 0;
-                yvals[2] = 0;
+                xvals[1] = 1;
+                yvals[1] = 0;
+                xvals[3] = topoMatrix.cols() - 1;
+                yvals[3] = 0;
+            }
+            else if(gridPoints == 2)
+            {
+                qint32 valsIndex = 1;
+                for(qint32 i = 0; i < topoMatrix.cols(); i++)
+                    if(topoMatrix(i, j) != 0)
+                    {
+                        xvals[valsIndex] = i;
+                        yvals[valsIndex] = topoMatrix(i, j);
+                        valsIndex++;
+                    }
+
+                xvals[0] = 0;
+                yvals[0] = 0;
+                xvals[3] = topoMatrix.cols() - 1;
+                yvals[3] = 0;
+            }
+            else if(gridPoints == 3)
+            {
+                qint32 valsIndex = 1;
+                for(qint32 i = 0; i < topoMatrix.cols(); i++)
+                    if(topoMatrix(i, j) != 0)
+                    {
+                        xvals[valsIndex] = i;
+                        yvals[valsIndex] = topoMatrix(i, j);
+                        valsIndex++;
+                    }
+
+                xvals[0] = 0;
+                yvals[0] = 0;
             }
             else
             {
@@ -251,22 +281,22 @@ MatrixXd Tpplot::calcSplineInterpolation(MatrixXd topoMatrix)
                     }
             }
 
-            std::cout << xvals << " --- " << std::endl;
-            std::cout << yvals << std::endl;
+            std::cout << "xvals=" << xvals << " --- " << std::endl;
+            std::cout << "yvals=" << yvals << std::endl;
             //std::cout << yvals[1] << "---";
-            //std::cout << yvals[1] << "---";
+            //std::cout << xvals.rows() << "---";
 
-            ControlPointVectorType points(2,xvals.rows());
+            ControlPointVectorType points(2, xvals.rows());
             points.row(0) = xvals;
             points.row(1) = yvals;
-            const Spline2d spline = SplineFitting<Spline2d>::Interpolate(points,3);
+            const Spline2d spline = SplineFitting<Spline2d>::Interpolate(points, 3);
 
 
             qint32 index = 0;
-            for(qreal u = 0; u <= 1; u+=1.0 /(topoMatrix.cols() - 1))
+            for(qreal u = 0; u <= 1; u += 1.0 /(topoMatrix.cols() - 1))
             {
                 PointType y = spline(u);
-                std::cout << "(" << u << ":" << y(0,0) << "," << y(1,0) << ") " << std::endl;
+                // std::cout << "(" << u << ":" << y(0,0) << "," << y(1,0) << ") " << std::endl;
                 splineResultMatrix(index, j) = y(1, 0);
                 index++;
             }            
